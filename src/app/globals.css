@@ -1,26 +1,176 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+@theme {
+  --font-sans: var(--font-jakarta), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+  /* Warm off-white canvas, white surfaces, ink + red accents (matches the marketing site) */
+  --color-bg: #f3f2f0;
+  --color-surface: #ffffff;
+  --color-surface-2: #f5f4f2;
+  --color-line: #ebe9e6;
+  --color-fg: #151515;
+  --color-muted: #8a8580;
+  --color-brand: #151515;
+  --color-brand-dark: #000000;
+  --color-brand-2: #c4321f;
+  --color-brand-3: #e8735f;
+  --color-success: #2f9e5f;
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+  --shadow-soft: 0 10px 30px -14px rgb(0 0 0 / 0.14);
+  --shadow-float: 0 18px 40px -18px rgb(0 0 0 / 0.45);
+  --shadow-frame: 0 30px 80px -30px rgb(0 0 0 / 0.3);
+
+  /* Marketing pages (landing + auth): off-white canvas, ink type, loud poster colours */
+  --font-display: var(--font-inter-tight), var(--font-jakarta), ui-sans-serif, system-ui, sans-serif;
+  --color-chalk: #f5f5f3;
+  --color-ink: #151515;
+  --color-ink-soft: #5c5c5c;
+  --color-zest: #e9f56f;
+  --color-tang: #f26b2f;
+  --color-rouge: #a3241b;
+  --color-cobalt: #2f5bff;
+  --color-sun: #f9c52b;
+  --color-berry: #d61c63;
+  --color-moss: #1d6f48;
+
+  --animate-marquee: marquee 38s linear infinite;
+  --animate-marquee-rev: marquee 44s linear infinite reverse;
+  --animate-rise: rise 0.9s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  --animate-float: float 6s ease-in-out infinite;
+  @keyframes marquee {
+    from { transform: translateX(0); }
+    to { transform: translateX(-50%); }
+  }
+  @keyframes rise {
+    from { opacity: 0; transform: translateY(60px) scale(0.92); }
+    to { opacity: 1; transform: none; }
+  }
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-8px); }
+  }
+
+  --animate-fade-up: fade-up 0.4s ease-out both;
+  --animate-shimmer: shimmer 2.2s linear infinite;
+  @keyframes fade-up {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: none; }
+  }
+  @keyframes shimmer {
+    from { background-position: 200% 0; }
+    to { background-position: -200% 0; }
+  }
+
+  /* Mobile bottom sheets */
+  --animate-sheet-up: sheet-up 0.32s cubic-bezier(0.2, 0.9, 0.25, 1) both;
+  --animate-fade-in: fade-in 0.2s ease-out both;
+  @keyframes sheet-up {
+    from { transform: translateY(100%); }
+    to { transform: none; }
+  }
+  @keyframes fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+html { color-scheme: light; }
+body { background: var(--color-bg); color: var(--color-fg); -webkit-tap-highlight-color: transparent; }
+button, a, [role='option'] { touch-action: manipulation; }
+::selection { background: rgb(196 50 31 / 0.2); }
+
+@layer components {
+  .card { @apply rounded-3xl bg-surface shadow-soft; }
+  .label { @apply mb-1.5 block text-xs font-medium text-muted; }
+  .input {
+    @apply w-full rounded-2xl border border-transparent bg-surface-2 px-3.5 py-3 text-base text-fg placeholder:text-muted/70 sm:py-2.5 sm:text-sm
+      outline-none transition focus:border-brand/40 focus:bg-surface focus:ring-4 focus:ring-brand/10 disabled:opacity-60;
+  }
+  .btn, .btn-primary, .btn-ghost, .btn-danger, .btn-pink {
+    @apply inline-flex items-center justify-center gap-2 rounded-2xl px-4 py-2.5 text-sm font-semibold transition
+      disabled:pointer-events-none disabled:opacity-50 cursor-pointer whitespace-nowrap active:scale-[0.97];
+  }
+  .btn-primary { @apply bg-brand text-white shadow-float hover:bg-brand-dark; }
+  .btn-pink { @apply bg-brand-2 text-white shadow-[0_14px_30px_-14px_rgb(196_50_31/0.7)] hover:brightness-105; }
+  .btn-ghost { @apply bg-surface-2 text-fg hover:bg-brand/10 hover:text-brand-dark; }
+  .btn-danger { @apply bg-rose-50 text-rose-600 hover:bg-rose-100; }
+  .chip { @apply inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-semibold ring-1 ring-inset; }
+  .pill { @apply inline-flex items-center rounded-full bg-brand-2/12 px-3 py-1 text-[11px] font-semibold text-brand-2; }
+  .text-gradient { @apply bg-gradient-to-r from-brand to-brand-2 bg-clip-text text-transparent; }
+  /* Black "hero" surface (overview card, AI panels) */
+  .panel-brand { @apply rounded-3xl bg-brand text-white shadow-float; }
+  .panel-pink { @apply rounded-3xl bg-brand-2 text-white shadow-[0_18px_40px_-16px_rgb(196_50_31/0.6)]; }
+  /* AI surfaces: faint warm wash with a ring */
+  .ai-border { @apply bg-gradient-to-br from-brand/[0.07] via-surface to-brand-2/[0.06] ring-1 ring-brand/15 shadow-soft; }
+  .ai-shimmer {
+    background: linear-gradient(90deg, transparent, rgb(196 50 31 / 0.12), transparent) 0 0 / 200% 100%;
+    @apply animate-shimmer;
+  }
+  /* Rounded square holding an icon (the floating badges from the dashboard cards) */
+  .icon-tile { @apply grid place-items-center rounded-2xl bg-brand text-white shadow-float; }
+
+  /* Native-feeling touch feedback for tappable cards and rows */
+  .press { @apply transition active:scale-[0.98] active:opacity-90; }
+  /* Grabber bar on top of bottom sheets */
+  .sheet-handle { @apply mx-auto mb-3 block h-1.5 w-10 rounded-full bg-line sm:hidden; }
+  /* iOS-style segmented control */
+  .segmented { @apply flex rounded-2xl bg-surface-2 p-1; }
+  .segmented > button { @apply flex flex-1 items-center justify-center gap-1.5 rounded-xl px-3 py-2 text-xs font-semibold text-muted transition sm:py-1.5; }
+  .segmented > button[aria-pressed='true'] { @apply bg-brand text-white shadow-float; }
 }
+
+/* iOS collapses empty date inputs and draws its own chrome */
+.input[type='datetime-local'], .input[type='date'] { -webkit-appearance: none; appearance: none; min-height: 2.75rem; }
+.input[type='search']::-webkit-search-cancel-button { -webkit-appearance: none; }
+
+/* Safe-area helpers (notch + home indicator when installed / viewport-fit=cover) */
+@utility pt-safe { padding-top: env(safe-area-inset-top); }
+@utility pb-safe { padding-bottom: env(safe-area-inset-bottom); }
+/* Room under page content for the fixed mobile tab bar */
+@utility pb-tabbar { padding-bottom: calc(6.5rem + env(safe-area-inset-bottom)); }
+@utility bottom-tabbar { bottom: calc(5.75rem + env(safe-area-inset-bottom)); }
+
+/* Marketing scope. Restyles the shared form primitives (.input, .btn-*) only inside public pages. */
+@layer components {
+  .mk { @apply bg-chalk text-ink; }
+  .mk .label { @apply text-ink-soft; }
+  .mk .input { @apply rounded-full border-black/10 bg-white px-5 py-3 focus:border-ink focus:ring-ink/10; }
+  .mk .btn-primary { @apply rounded-full bg-ink text-white shadow-none hover:bg-black; }
+  .mk .btn-ghost { @apply rounded-full bg-black/5 text-ink hover:bg-black/10 hover:text-ink; }
+  .mk .icon-tile { @apply bg-ink shadow-none; }
+
+  .display { @apply font-display font-semibold tracking-[-0.045em] leading-[0.95]; }
+  .eyebrow { @apply text-[11px] font-semibold uppercase tracking-[0.28em]; }
+  .pill-dark, .pill-light {
+    @apply inline-flex items-center justify-center gap-2 rounded-full px-5 py-2.5 text-sm font-medium transition cursor-pointer whitespace-nowrap;
+  }
+  .pill-dark { @apply bg-ink text-white hover:-translate-y-0.5 hover:bg-black; }
+  .pill-light { @apply bg-white text-ink ring-1 ring-black/10 hover:-translate-y-0.5 hover:ring-black/25; }
+  .round-btn { @apply grid size-10 place-items-center rounded-full bg-white text-ink shadow-[0_6px_20px_-8px_rgb(0_0_0/0.25)] transition hover:scale-105; }
+  /* "@handle" speech bubble with a tail */
+  .bubble {
+    @apply relative inline-flex rounded-full px-3.5 py-1.5 font-display text-sm font-medium tracking-tight text-white shadow-lg;
+  }
+  .bubble::after {
+    content: '';
+    @apply absolute -bottom-1.5 left-1/2 size-3 -translate-x-1/2 rotate-45 rounded-[2px] bg-inherit;
+  }
+  /* White circle holding an outline icon (the badge clusters) */
+  .badge-circle { @apply grid size-16 place-items-center rounded-full bg-white text-ink shadow-[0_8px_24px_-12px_rgb(0_0_0/0.3)]; }
+  .poster { @apply overflow-hidden rounded-[22px] shadow-[0_24px_50px_-24px_rgb(0_0_0/0.45)]; }
+
+  .reveal { opacity: 0; transform: translateY(40px); transition: opacity 0.8s ease, transform 0.9s cubic-bezier(0.2, 0.8, 0.2, 1); }
+  .reveal[data-shown] { opacity: 1; transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mk *, .mk *::before { animation: none !important; transition: none !important; }
+  .mk .reveal { opacity: 1; transform: none; }
+}
+
+.no-scrollbar { scrollbar-width: none; }
+.no-scrollbar::-webkit-scrollbar { display: none; }
+
+.scroll-thin { scrollbar-width: thin; scrollbar-color: rgb(0 0 0 / 0.2) transparent; }
+
