@@ -14,7 +14,7 @@ interface Props {
   workspace: {
     name: string;
     planName: string;
-    ai: { choice: string; options: { provider: ProviderId; model: string; label: string; available: boolean }[]; usage: { used: number; limit: number } };
+    ai: { choice: string; locked: boolean; options: { provider: ProviderId; model: string; label: string; available: boolean }[]; usage: { used: number; limit: number } };
     integrations: { name: string; ok: boolean; hint: string }[];
   } | null;
 }
@@ -213,9 +213,9 @@ export default function SettingsView({ profile, workspace }: Props) {
                   <Select
                     aria-label="AI provider and model"
                     value={model}
-                    disabled={aiAction.busy}
+                    disabled={aiAction.busy || workspace.ai.locked}
                     onChange={pickModel}
-                    placeholder="No AI key configured"
+                    placeholder="No AI model available"
                     options={workspace.ai.options.map((o) => ({
                       value: `${o.provider}:${o.model}`,
                       label: o.label.split(' · ')[0],
@@ -227,6 +227,7 @@ export default function SettingsView({ profile, workspace }: Props) {
                 </label>
                 <Meter label="AI actions this month" used={workspace.ai.usage.used} limit={workspace.ai.usage.limit} />
               </div>
+              {workspace.ai.locked && <p className="mt-3 text-xs font-medium text-muted">Managed by your platform admin — contact support to change the AI model.</p>}
               <div className="mt-4">
                 <Status error={aiAction.error} done={aiAction.done} />
               </div>

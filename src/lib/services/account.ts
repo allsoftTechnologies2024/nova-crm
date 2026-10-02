@@ -30,7 +30,8 @@ export async function updateProfile(auth: AuthContext, input: z.infer<typeof pro
 export async function changePassword(auth: AuthContext, input: z.infer<typeof passwordChangeSchema>) {
   await connectDB();
   const user = await User.findById(auth.user.id).select('+passwordHash');
-  if (!user || !(await bcrypt.compare(input.current, user.passwordHash))) throw badRequest('Your current password is incorrect.');
+  if (user && !user.passwordHash) throw badRequest('You sign in with Google and have no password yet. Use "Forgot password" on the sign-in page to set one.');
+  if (!user?.passwordHash || !(await bcrypt.compare(input.current, user.passwordHash))) throw badRequest('Your current password is incorrect.');
   if (input.current === input.next) throw badRequest('Choose a password different from your current one.');
   user.passwordHash = await bcrypt.hash(input.next, 10);
   user.passwordChangedAt = new Date();

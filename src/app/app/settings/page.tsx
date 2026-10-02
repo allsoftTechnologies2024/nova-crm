@@ -1,6 +1,6 @@
 import SettingsView from '@/components/app/SettingsView';
-import { aiUsage, providerConfigured, resolveModel } from '@/lib/ai';
-import { PROVIDERS, modelOptions } from '@/lib/ai/models';
+import { aiUsage, modelChoices, providerConfigured, resolveForOrg } from '@/lib/ai';
+import { PROVIDERS } from '@/lib/ai/models';
 import { requirePage } from '@/lib/auth/session';
 import { mailConfigured } from '@/lib/mailer';
 import { ROLE_META } from '@/lib/rbac';
@@ -12,7 +12,7 @@ export const metadata = { title: 'Settings' };
 export default async function SettingsPage() {
   const auth = await requirePage();
   const manage = auth.can('settings:manage');
-  const active = resolveModel(auth.org.ai);
+  const [active, choices] = await Promise.all([resolveForOrg(auth.org), modelChoices(auth.org.aiPolicy)]);
 
   return (
     <SettingsView
@@ -23,8 +23,10 @@ export default async function SettingsPage() {
               name: auth.org.name,
               planName: auth.plan.name,
               ai: {
-                choice: active ? `${active.provider}:${active.model}` : '',
-                options: modelOptions().map((o) => ({ ...o, available: providerConfigured(o.provider) })),
+                choice: active?.key ?? '',
+                // Only models the platform allows for this workspace.
+                options: choices.map((c) => ({ provider: c.provider, model: c.model, label: c.label, available: c.configured })),
+                locked: auth.org.aiPolicy.locked,
                 usage: aiUsage(auth),
               },
               integrations: [

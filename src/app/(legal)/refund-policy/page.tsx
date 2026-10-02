@@ -14,13 +14,13 @@ export default function RefundPage() {
 
       <h2>2. How payments work</h2>
       <p>
-        Each payment buys access to a plan for one period — one month or one year — starting immediately. Plans <strong>do not renew automatically</strong>: we never charge you again unless you
-        choose to pay for another period.
+        Each payment buys access to a plan for one period — one month or one year — starting immediately. A one-time payment <strong>does not renew</strong>. If you turn on{' '}
+        <strong>Autopay</strong> in Billing, the same plan renews automatically at the end of each period using your card or UPI Autopay mandate, until you turn it off.
       </p>
 
       <h2>3. Cancellation</h2>
       <ul>
-        <li>You can stop using the Service at any time. Because there is no automatic renewal, there is nothing to cancel to avoid future charges.</li>
+        <li>You can stop using the Service at any time. If Autopay is on, turn it off in Billing (or ask us) to stop future charges — it takes effect before the next renewal.</li>
         <li>Your paid access continues until the end of the period you paid for. After that, the workspace becomes read-only until you pay again; your data is kept.</li>
         <li>
           To close your account and delete your data, email <a href={`mailto:${LEGAL.email}`}>{LEGAL.email}</a> from the workspace owner’s email address.

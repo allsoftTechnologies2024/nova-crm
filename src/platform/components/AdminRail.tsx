@@ -1,6 +1,6 @@
 'use client';
 
-import { Building2, ChevronLeft, CreditCard, Layers, KeyRound, LayoutDashboard, LogOut, ScrollText, ShieldCheck, UserCog, Users } from 'lucide-react';
+import { Building2, ChevronLeft, Cpu, CreditCard, Layers, KeyRound, LayoutDashboard, LogOut, ScrollText, ShieldCheck, UserCog, Users } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useState } from 'react';
@@ -12,6 +12,7 @@ const ITEMS = [
   { href: '/admin/workspaces', label: 'Workspaces', icon: Building2 },
   { href: '/admin/users', label: 'Users', icon: Users },
   { href: '/admin/plans', label: 'Plans', icon: Layers },
+  { href: '/admin/ai-models', label: 'AI models', icon: Cpu },
   { href: '/admin/payments', label: 'Payments', icon: CreditCard },
   { href: '/admin/audit', label: 'Audit log', icon: ScrollText },
   { href: '/admin/admins', label: 'Platform admins', icon: UserCog },

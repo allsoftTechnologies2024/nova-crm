@@ -18,8 +18,13 @@ export default function TermsPage() {
     >
       <h2>1. The Service</h2>
       <p>
-        {b} is an online customer relationship management (CRM) software service. It lets teams store and manage sales leads, track activity, and use AI features (lead capture from notes,
-        lead scoring, message drafting and an AI assistant). The Service is provided over the internet; nothing is shipped physically.
+        {b} is an online customer relationship management (CRM) software service, sold as a subscription (SaaS). It lets businesses organise their own customers, contacts and sales
+        deals, track activity, and use AI features (turning notes into customer records, deal scoring, message drafting and an AI assistant). The Service is provided over the
+        internet; nothing is shipped physically.
+      </p>
+      <p>
+        {b} is software only. We do <strong>not</strong> generate, buy, sell, rent or supply leads, contact lists or customer data, and we do not run advertising or marketing
+        campaigns for you. Every record in a workspace is added by that workspace’s own team, and it belongs to them.
       </p>
 
       <h2>2. Eligibility and accounts</h2>
@@ -41,8 +46,9 @@ export default function TermsPage() {
           unless stated otherwise.
         </li>
         <li>
-          Payments are processed securely by Razorpay. We do not see or store your card, UPI or bank details. Each payment buys access for the chosen period (monthly or yearly). Plans do not
-          renew automatically — you choose whether to pay for the next period.
+          Payments are processed securely by Razorpay. We do not see or store your card, UPI or bank details. Each payment buys access for the chosen period (monthly or yearly). One-time payments
+          don’t renew. If you turn on Autopay, the plan renews automatically each period until you turn Autopay off in Billing; turning it off stops future charges and your
+          paid period continues to its end.
         </li>
         <li>We may change prices or plans for future periods. Changes never affect a period you have already paid for.</li>
         <li>
@@ -52,14 +58,14 @@ export default function TermsPage() {
 
       <h2>4. Your data</h2>
       <ul>
-        <li>You own the data you put into the Service (leads, notes, files and messages). We only use it to provide and improve the Service for you, as described in our <Link href="/privacy">Privacy Policy</Link>.</li>
+        <li>You own the data you put into the Service (customer records, notes, files and messages). We only use it to provide and improve the Service for you, as described in our <Link href="/privacy">Privacy Policy</Link>.</li>
         <li>You are responsible for having the right to store and process the personal data of your own customers and contacts in the Service.</li>
         <li>We are not responsible for loss of data caused by your own actions (for example deleting records or workspaces).</li>
       </ul>
 
       <h2>5. AI features</h2>
       <p>
-        AI features are powered by third-party models (Anthropic Claude and Google Gemini). AI output can be incomplete or wrong. Review AI-generated content — such as extracted lead details, scores,
+        AI features are powered by third-party models (Anthropic Claude and Google Gemini). AI output can be incomplete or wrong. Review AI-generated content — such as extracted customer details, scores,
         summaries and drafted messages — before relying on it or sending it. AI usage is limited per plan each month.
       </p>
 

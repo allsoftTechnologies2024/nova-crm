@@ -16,6 +16,7 @@ export async function listPayments() {
     amount: p.amount,
     status: p.status,
     orderId: p.orderId,
+    method: p.method ?? 'checkout',
     paymentId: p.paymentId,
     at: iso((p.paidAt ?? p.createdAt) as Date)!,
   }));

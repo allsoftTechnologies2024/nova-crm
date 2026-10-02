@@ -18,7 +18,7 @@ export default function PrivacyPage() {
       <h3>Account information</h3>
       <p>Your name, email address, company / workspace name, and a securely hashed version of your password (we never store it in plain text).</p>
       <h3>Workspace data you add</h3>
-      <p>Leads and their contact details, notes, activity history, AI chat messages and anything else you or your team enter. You control this data.</p>
+      <p>Your customers and contacts, their details, deals, notes, activity history, AI chat messages and anything else you or your team enter. You control this data.</p>
       <h3>Payment information</h3>
       <p>
         Payments are handled by Razorpay. We receive the order and payment reference, plan, amount and status — never your card, UPI or bank account details.
@@ -33,7 +33,7 @@ export default function PrivacyPage() {
         <li>to send service emails, such as password-reset links and important account notices;</li>
         <li>to respond to support requests.</li>
       </ul>
-      <p>We do not sell your data and we do not use your workspace data for advertising.</p>
+      <p>We do not sell, rent or share your data (or your customers’ data) with anyone for marketing, and we do not use your workspace data for advertising.</p>
 
       <h2>3. Services we share data with</h2>
       <p>We use trusted providers only as needed to run the Service:</p>

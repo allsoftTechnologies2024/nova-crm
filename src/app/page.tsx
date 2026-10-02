@@ -7,7 +7,7 @@ import { FeatureSlider, RoleTabs, StepsCarousel } from '@/components/marketing/L
 import LegalLinks from '@/components/legal/LegalLinks';
 import Reveal from '@/components/marketing/Reveal';
 import { Logo, ScoreRing } from '@/components/ui';
-import { formatINR, isFree, type Plan } from '@/lib/plans';
+import { formatINR, isFree, yearlySavingPct, type Plan } from '@/lib/plans';
 import { getPlan, getSettings, publicPlans } from '@/lib/services/plans';
 
 const PIPELINE = [
@@ -60,19 +60,20 @@ function TeamRow({ reverse = false }: { reverse?: boolean }) {
 // Pricing comes from the plans managed in the platform console; refreshed every minute.
 export const revalidate = 60;
 
-async function pricing(): Promise<{ plans: Plan[]; trialDays: number | null; trialPlanName: string | null }> {
+// Pricing cards: the free trial (if enabled) first, then the paid subscription plans.
+async function pricing(): Promise<{ trial: { days: number; plan: Plan } | null; paid: Plan[] }> {
   try {
     const [plans, settings] = await Promise.all([publicPlans(), getSettings()]);
-    // The trial plan can be hidden from pricing (e.g. Starter), so look it up directly.
-    const trial = settings.trial.enabled ? await getPlan(settings.trial.planKey) : null;
-    return trial?.active ? { plans, trialDays: settings.trial.days, trialPlanName: trial.name } : { plans, trialDays: null, trialPlanName: null };
+    // The trial plan is usually hidden from pricing (e.g. Starter), so look it up directly.
+    const trialPlan = settings.trial.enabled ? await getPlan(settings.trial.planKey) : null;
+    return { trial: trialPlan?.active ? { days: settings.trial.days, plan: trialPlan } : null, paid: plans.filter((p) => !isFree(p)) };
   } catch {
-    return { plans: [], trialDays: null, trialPlanName: null }; // e.g. no database during build — next revalidation fills it in
+    return { trial: null, paid: [] }; // e.g. no database during build — next revalidation fills it in
   }
 }
 
 export default async function Home() {
-  const { plans, trialDays, trialPlanName } = await pricing();
+  const { trial, paid } = await pricing();
   return (
     <div className="mk min-h-screen overflow-x-clip bg-[#ebebe8]">
       {/* Framed nav + hero (the white "browser frame" from the reference) */}
@@ -113,7 +114,7 @@ export default async function Home() {
               Capture, score <span className="text-rouge">&amp; close every deal.</span>
             </h1>
             <p className="mx-auto mt-6 max-w-lg animate-fade-up text-base text-ink-soft sm:text-lg">
-              Talk, paste or snap. Smart CRM turns it into a lead, scores it, writes the follow-up and keeps your pipeline current.
+              CRM software for your sales team. Add your customers by voice, text or photo — Smart CRM organises them, suggests the next step, drafts the follow-up and keeps your pipeline current.
             </p>
             <div className="mt-8 flex animate-fade-up flex-wrap justify-center gap-2">
               <Link href="/signup" className="pill-dark px-6 py-3">
@@ -123,7 +124,7 @@ export default async function Home() {
                 How it works
               </a>
             </div>
-            <p className="mt-4 text-xs text-ink-soft">{trialDays ? `${trialDays}-day free trial` : 'Free trial'} · no card needed</p>
+            <p className="mt-4 text-xs text-ink-soft">{trial ? `${trial.days}-day free trial` : 'Free trial'} · no card needed</p>
 
             {/* Product screenshot, cut off by the bottom of the frame */}
             <div className="relative mx-auto mt-14 max-w-6xl sm:mt-16">
@@ -195,29 +196,62 @@ export default async function Home() {
         <Reveal className="text-center">
           <p className="eyebrow text-ink-soft">Pricing</p>
           <h2 className="display mt-4 text-5xl sm:text-7xl">Start free. Grow into it.</h2>
-          <p className="mx-auto mt-4 max-w-md text-ink-soft">Upgrade with UPI, cards or netbanking via Razorpay.</p>
-          {trialDays && (
-            <p className="mx-auto mt-3 w-fit rounded-full bg-white px-4 py-1.5 text-sm font-medium text-ink ring-1 ring-black/10">
-              Every new workspace starts with a {trialDays}-day free trial{trialPlanName ? ` (${trialPlanName} limits)` : ''} · no card needed
-            </p>
-          )}
+          <p className="mx-auto mt-4 max-w-md text-ink-soft">
+            {trial ? `Try it free for ${trial.days} days, then choose a subscription.` : 'Choose a subscription.'} Pay with UPI, cards or netbanking via Razorpay.
+          </p>
         </Reveal>
         <div className="mt-14 grid gap-5 md:grid-cols-3">
-          {plans.map((p, i) => {
+          {trial && (
+            <Reveal delay={0} className="h-full">
+              <div className="flex h-full flex-col">
+                <span className="w-fit rounded-t-2xl bg-ink px-5 pb-2 pt-3 text-xs font-semibold text-white">Free trial · no card needed</span>
+                <div className="flex flex-1 flex-col rounded-[24px] rounded-tl-none bg-white p-7 ring-2 ring-ink">
+                  <h3 className="font-display text-2xl font-semibold tracking-tight">Free trial</h3>
+                  <p className="mt-1 text-sm text-ink-soft">
+                    {trial.days} days with {trial.plan.name} limits to try everything
+                  </p>
+                  <p className="display mt-6 text-5xl">
+                    ₹0<span className="ml-1 font-sans text-sm font-normal tracking-normal text-ink-soft">for {trial.days} days</span>
+                  </p>
+                  <ul className="my-7 flex-1 space-y-2.5 text-sm">
+                    {trial.plan.features.map((f) => (
+                      <li key={f} className="flex gap-2.5">
+                        <span className="grid size-5 shrink-0 place-items-center rounded-full bg-ink text-white">
+                          <Check className="size-3" strokeWidth={3} />
+                        </span>
+                        {f}
+                      </li>
+                    ))}
+                  </ul>
+                  <Link href="/signup" className="pill-dark">
+                    Start free trial
+                  </Link>
+                  <p className="mt-3 text-center text-xs text-ink-soft">Then subscribe to keep going</p>
+                </div>
+              </div>
+            </Reveal>
+          )}
+          {paid.map((p, i) => {
             const featured = p.popular;
+            const yearly = yearlySavingPct(p);
             return (
-              <Reveal key={p.id} delay={i * 120} className="h-full">
+              <Reveal key={p.id} delay={(i + (trial ? 1 : 0)) * 120} className="h-full">
                 <div className="flex h-full flex-col">
                   <span className={`w-fit rounded-t-2xl px-5 pb-2 pt-3 text-xs font-semibold ${featured ? 'bg-tang text-white' : 'bg-white text-ink-soft'}`}>
-                    {featured ? 'Most popular' : isFree(p) ? 'Forever free' : 'Monthly'}
+                    {featured ? 'Most popular' : 'Subscription'}
                   </span>
                   <div className={`flex flex-1 flex-col rounded-[24px] rounded-tl-none p-7 ${featured ? 'bg-tang text-white' : 'bg-white'}`}>
                     <h3 className="font-display text-2xl font-semibold tracking-tight">{p.name}</h3>
                     <p className={`mt-1 text-sm ${featured ? 'text-white/80' : 'text-ink-soft'}`}>{p.tagline}</p>
                     <p className="display mt-6 text-5xl">
-                      {isFree(p) ? 'Free' : formatINR(p.priceMonthly)}
-                      {!isFree(p) && <span className={`ml-1 font-sans text-sm font-normal tracking-normal ${featured ? 'text-white/80' : 'text-ink-soft'}`}>/mo</span>}
+                      {formatINR(p.priceMonthly)}
+                      <span className={`ml-1 font-sans text-sm font-normal tracking-normal ${featured ? 'text-white/80' : 'text-ink-soft'}`}>/mo</span>
                     </p>
+                    {p.priceYearly > 0 && (
+                      <p className={`mt-1 text-xs ${featured ? 'text-white/80' : 'text-ink-soft'}`}>
+                        or {formatINR(p.priceYearly)}/yr{yearly ? ` · save ${yearly}%` : ''}
+                      </p>
+                    )}
                     <ul className="my-7 flex-1 space-y-2.5 text-sm">
                       {p.features.map((f) => (
                         <li key={f} className="flex gap-2.5">
@@ -229,8 +263,11 @@ export default async function Home() {
                       ))}
                     </ul>
                     <Link href="/signup" className={featured ? 'pill-light ring-0' : 'pill-dark'}>
-                      {isFree(p) ? 'Get started' : trialDays ? 'Start free trial' : `Get ${p.name}`}
+                      Choose {p.name}
                     </Link>
+                    <p className={`mt-3 text-center text-xs ${featured ? 'text-white/80' : 'text-ink-soft'}`}>
+                      {trial ? 'Start with the free trial, upgrade anytime' : 'Upgrade anytime from Billing'}
+                    </p>
                   </div>
                 </div>
               </Reveal>
@@ -240,6 +277,35 @@ export default async function Home() {
       </section>
 
       {/* Closing cards */}
+      {/* What the product is — plain statement for customers and payment reviewers */}
+      <section id="about" className="mx-auto max-w-7xl scroll-mt-20 px-5 pt-20">
+        <Reveal>
+          <div className="grid gap-8 rounded-[28px] bg-white p-8 sm:p-10 md:grid-cols-[1fr_1.2fr]">
+            <div>
+              <p className="eyebrow text-ink-soft">About Smart CRM</p>
+              <h2 className="display mt-4 text-4xl sm:text-5xl">CRM software for your own customers.</h2>
+            </div>
+            <div className="space-y-4 text-ink-soft">
+              <p>
+                Smart CRM is a customer relationship management app sold as a monthly or yearly subscription (SaaS). Small businesses and sales teams use it to keep their
+                customers, contacts, deals, notes and follow-ups in one place, with AI that helps them write and prioritise.
+              </p>
+              <ul className="space-y-2 text-sm">
+                {[
+                  'You add your own customers — from your calls, chats, meetings and business cards.',
+                  'We do not generate, buy, sell or supply leads or contact lists.',
+                  'We do not run ads or marketing campaigns. Your data stays private to your team.',
+                ].map((t) => (
+                  <li key={t} className="flex gap-2">
+                    <Check className="mt-0.5 size-4 shrink-0 text-ink" /> {t}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </Reveal>
+      </section>
+
       <section className="mx-auto grid max-w-7xl gap-4 px-5 py-20 md:grid-cols-2">
         <Reveal className="h-full">
           <div className="relative flex h-full min-h-[460px] flex-col justify-end overflow-hidden rounded-[28px] bg-berry p-8 text-white sm:p-10">
@@ -295,7 +361,7 @@ export default async function Home() {
         <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4 px-5 text-sm text-ink-soft">
           <Logo className="text-ink" />
           <LegalLinks />
-          <p>© {new Date().getFullYear()} Smart CRM</p>
+          <p>© {new Date().getFullYear()} Smart CRM · CRM software (SaaS)</p>
         </div>
       </footer>
     </div>

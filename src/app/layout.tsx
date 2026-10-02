@@ -8,7 +8,7 @@ const interTight = Inter_Tight({ variable: '--font-inter-tight', subsets: ['lati
 
 export const metadata: Metadata = {
   title: { default: 'Smart CRM — the AI-first CRM', template: '%s · Smart CRM' },
-  description: 'Capture, score and close leads with Claude and Gemini. Role-based access, Razorpay billing.',
+  description: 'CRM software for small sales teams: manage your own customers, contacts and deals in one place, with AI assistance from Claude and Gemini.',
   applicationName: 'Smart CRM',
   appleWebApp: { capable: true, title: 'Smart CRM', statusBarStyle: 'default' },
   formatDetection: { telephone: false },

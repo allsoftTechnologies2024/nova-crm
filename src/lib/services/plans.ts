@@ -2,6 +2,7 @@ import 'server-only';
 import { revalidatePath } from 'next/cache';
 import { connectDB } from '@/lib/db';
 import { LOCK_PLAN_KEY, fromStoredLimit, type Plan, type PlanSource, type PlanStatus } from '@/lib/plans';
+import { ALL_MODEL_KEYS } from '@/lib/ai/models';
 import { PlanModel, type PlanDoc } from '@/models/Plan';
 import { PlatformSettings } from '@/models/PlatformSettings';
 
@@ -15,6 +16,7 @@ const store = globalThis as unknown as { __planCatalog?: Cache | null };
 export interface Settings {
   trial: { enabled: boolean; planKey: string; days: number };
   fallbackPlanKey: string;
+  ai: { enabledModels: string[]; defaultModel: string };
 }
 
 // Starting catalogue, created once when the database has no plans (the platform admin can change all of it).
@@ -91,6 +93,10 @@ async function load(): Promise<Cache> {
     settings: {
       trial: { enabled: s?.trial?.enabled ?? true, planKey: s?.trial?.planKey ?? 'pro', days: s?.trial?.days ?? 30 },
       fallbackPlanKey: s?.fallbackPlanKey ?? LOCK_PLAN_KEY,
+      ai: {
+        enabledModels: (s?.ai?.enabledModels?.length ? s.ai.enabledModels : ALL_MODEL_KEYS).filter((k) => ALL_MODEL_KEYS.includes(k)),
+        defaultModel: s?.ai?.defaultModel && ALL_MODEL_KEYS.includes(s.ai.defaultModel) ? s.ai.defaultModel : '',
+      },
     },
   };
   store.__planCatalog = cache;

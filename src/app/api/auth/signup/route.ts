@@ -1,11 +1,8 @@
 import bcrypt from 'bcryptjs';
 import { z } from 'zod';
-import { startSession } from '@/lib/auth/session';
 import { connectDB } from '@/lib/db';
 import { badRequest, parseBody, route } from '@/lib/http';
-import { logActivity } from '@/lib/services/activity';
-import { initialPlanFor } from '@/lib/services/plans';
-import { Organization } from '@/models/Organization';
+import { createWorkspace } from '@/lib/services/signup';
 import { User } from '@/models/User';
 
 const schema = z.object({
@@ -20,17 +17,5 @@ export const POST = route(async (req) => {
   const input = await parseBody(req, schema);
   await connectDB();
   if (await User.exists({ email: input.email.toLowerCase() })) throw badRequest('That email is already registered. Sign in instead.');
-  const org = await Organization.create({
-    name: input.company,
-    ...(await initialPlanFor()), // free trial if enabled in the platform console, else the fallback plan
-    ai: { provider: process.env.ANTHROPIC_API_KEY ? 'claude' : 'gemini', model: '' },
-  });
-  try {
-    const user = await User.create({ orgId: org._id, name: input.name, email: input.email, role: 'owner', passwordHash: await bcrypt.hash(input.password, 10) });
-    await startSession(String(user._id), String(org._id));
-    await logActivity({ orgId: String(org._id), userId: String(user._id), name: user.name }, { action: 'workspace.created', category: 'workspace', summary: `Created the workspace ${org.name}` });
-  } catch (err) {
-    await Organization.deleteOne({ _id: org._id });
-    throw err;
-  }
+  await createWorkspace({ name: input.name, company: input.company, email: input.email, passwordHash: await bcrypt.hash(input.password, 10) });
 });

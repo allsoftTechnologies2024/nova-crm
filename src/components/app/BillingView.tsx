@@ -1,6 +1,6 @@
 'use client';
 
-import { Check, ShieldCheck } from 'lucide-react';
+import { Check, RefreshCw, ShieldCheck } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import Script from 'next/script';
 import { useState } from 'react';
@@ -10,14 +10,15 @@ import { formatINR, isFree, priceOf, yearlySavingPct, type BillingPeriod, type P
 
 interface RazorpayOptions {
   key: string;
-  order_id: string;
-  amount: number;
-  currency: string;
+  order_id?: string; // one-time payment
+  subscription_id?: string; // Autopay
+  amount?: number;
+  currency?: string;
   name: string;
   description: string;
   prefill: { name: string; email: string };
   theme: { color: string };
-  handler: (res: { razorpay_order_id: string; razorpay_payment_id: string; razorpay_signature: string }) => void;
+  handler: (res: { razorpay_order_id?: string; razorpay_subscription_id?: string; razorpay_payment_id: string; razorpay_signature: string }) => void;
   modal: { ondismiss: () => void };
 }
 declare global {
@@ -31,16 +32,22 @@ interface Props {
   plans: Plan[]; // enabled + visible plans from the platform console
   current: { plan: PlanId; name: string; status: PlanStatus };
   usage: { seats: Usage; leads: Usage; ai: Usage };
-  payments: { id: string; plan: string; period: string; amount: number; paidAt: string }[];
+  payments: { id: string; plan: string; period: string; amount: number; method: string; paidAt: string }[];
   configured: boolean;
+  autopay: { plan: string; period: BillingPeriod; status: string; on: boolean; cancelAtCycleEnd: boolean; currentEnd: string | null } | null;
 }
 
-export default function BillingView({ plans, current, usage, payments, configured }: Props) {
+const METHOD: Record<string, string> = { checkout: 'One-time', subscription: 'Autopay', link: 'Payment link', manual: 'Offline' };
+const fmtDate = (iso: string) => new Date(iso).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'Asia/Kolkata' });
+
+export default function BillingView({ plans, current, usage, payments, configured, autopay }: Props) {
   const router = useRouter();
   const [period, setPeriod] = useState<BillingPeriod>('monthly');
-  const [busy, setBusy] = useState<PlanId | ''>('');
+  const [busy, setBusy] = useState<PlanId | 'cancel' | ''>('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [mode, setMode] = useState<'once' | 'autopay'>('once');
+  const autopayOn = Boolean(autopay?.on);
 
   const nameOf = (id: string) => plans.find((p) => p.id === id)?.name ?? id;
   const bestSaving = Math.max(0, ...plans.map(yearlySavingPct));
@@ -49,25 +56,22 @@ export default function BillingView({ plans, current, usage, payments, configure
     setBusy(plan);
     setError('');
     setSuccess('');
+    const recurring = mode === 'autopay';
     try {
       if (!window.Razorpay) throw new Error('Payment window failed to load. Check your connection and retry.');
-      const order = await api<{ keyId: string; orderId: string; amount: number; currency: string; description: string; prefill: { name: string; email: string }; orgName: string }>(
-        '/api/billing/order',
-        { body: { plan, period } }
-      );
+      type Start = { keyId: string; orderId?: string; subscriptionId?: string; amount: number; currency?: string; description: string; prefill: { name: string; email: string } };
+      const start = await api<Start>(recurring ? '/api/billing/autopay' : '/api/billing/order', { body: { plan, period } });
       const rzp = new window.Razorpay({
-        key: order.keyId,
-        order_id: order.orderId,
-        amount: order.amount,
-        currency: order.currency,
+        key: start.keyId,
+        ...(recurring ? { subscription_id: start.subscriptionId } : { order_id: start.orderId, amount: start.amount, currency: start.currency }),
         name: 'Smart CRM',
-        description: order.description,
-        prefill: order.prefill,
+        description: start.description,
+        prefill: start.prefill,
         theme: { color: '#151515' },
         handler: async (res) => {
           try {
-            await api('/api/billing/verify', { body: res });
-            setSuccess(`You're on ${nameOf(plan)}! 🎉`);
+            await api(recurring ? '/api/billing/autopay/verify' : '/api/billing/verify', { body: res });
+            setSuccess(recurring ? `Autopay is on — you're on ${nameOf(plan)} and it renews automatically. 🎉` : `You're on ${nameOf(plan)}! 🎉`);
             router.refresh();
           } catch (err) {
             setError(errorText(err));
@@ -99,7 +103,7 @@ export default function BillingView({ plans, current, usage, payments, configure
             : current.status.expired
             ? `Your ${current.status.onTrial || current.status.source === 'trial' ? 'free trial' : `${current.status.assigned.name} plan`} has ended — you're on ${current.name} limits now.`
             : current.status.expiresAt
-              ? `${current.name} plan · ${current.status.onTrial ? 'trial ends' : 'renews/ends'} ${new Date(current.status.expiresAt).toLocaleDateString([], { day: 'numeric', month: 'short', year: 'numeric' })}`
+              ? `${current.name} plan · ${current.status.onTrial ? 'trial ends' : 'renews/ends'} ${fmtDate(current.status.expiresAt)}`
               : `${current.name} plan`
         }
       />
@@ -122,7 +126,63 @@ export default function BillingView({ plans, current, usage, payments, configure
         <Meter label="AI actions this month" used={usage.ai.used} limit={usage.ai.limit ?? Infinity} />
       </section>
 
-      <div className="flex justify-center">
+      {autopay && (
+        <section className="card flex flex-wrap items-center gap-4 p-5">
+          <span className="grid size-11 shrink-0 place-items-center rounded-2xl bg-success/10 text-success">
+            <RefreshCw className="size-5" />
+          </span>
+          <div className="mr-auto min-w-0">
+            <p className="font-semibold">
+              {autopay.on ? 'Autopay is on' : autopay.cancelAtCycleEnd || autopay.status === 'cancelled' ? 'Autopay turned off' : `Autopay ${autopay.status}`} · {nameOf(autopay.plan)} ({autopay.period})
+            </p>
+            <p className="text-sm text-muted">
+              {autopay.on
+                ? `Renews automatically${autopay.currentEnd ? ` on ${fmtDate(autopay.currentEnd)}` : ''}. You can turn it off any time.`
+                : autopay.cancelAtCycleEnd || (autopay.status === 'cancelled' && current.status.expiresAt && !current.status.expired)
+                  ? `No further charges. Your paid access continues${current.status.expiresAt ? ` until ${fmtDate(current.status.expiresAt)}` : ''}.`
+                  : autopay.status === 'pending'
+                    ? 'The last renewal failed — Razorpay will retry. Check your card or UPI mandate.'
+                    : 'Autopay has stopped. Pay below to continue.'}
+            </p>
+          </div>
+          {autopay.on && (
+            <button
+              className="btn-ghost"
+              disabled={Boolean(busy)}
+              onClick={async () => {
+                if (!confirm('Turn off Autopay? You keep access until the end of the period you paid for.')) return;
+                setBusy('cancel');
+                setError('');
+                try {
+                  await api('/api/billing/autopay/cancel', { method: 'POST', body: {} });
+                  setSuccess('Autopay turned off. No further charges.');
+                  router.refresh();
+                } catch (err) {
+                  setError(errorText(err));
+                } finally {
+                  setBusy('');
+                }
+              }}
+            >
+              Turn off Autopay
+            </button>
+          )}
+        </section>
+      )}
+
+      <div className="flex flex-wrap justify-center gap-3">
+        <div className="segmented w-full max-w-xs" role="group" aria-label="Payment type">
+          {(
+            [
+              ['once', 'Pay once'],
+              ['autopay', 'Autopay'],
+            ] as const
+          ).map(([m, label]) => (
+            <button key={m} onClick={() => setMode(m)} aria-pressed={mode === m} disabled={m === 'autopay' && autopayOn}>
+              {label}
+            </button>
+          ))}
+        </div>
         <div className="segmented w-full max-w-xs">
           {(['monthly', 'yearly'] as const).map((p) => (
             <button key={p} onClick={() => setPeriod(p)} aria-pressed={period === p} className="capitalize">
@@ -131,6 +191,13 @@ export default function BillingView({ plans, current, usage, payments, configure
           ))}
         </div>
       </div>
+      <p className="-mt-3 text-center text-xs text-muted">
+        {mode === 'autopay'
+          ? 'Autopay renews automatically every period with your card or UPI Autopay. Turn it off any time.'
+          : autopayOn
+            ? 'Autopay is on — a one-time payment adds an extra period on top.'
+            : 'Pay for one period. Nothing renews automatically.'}
+      </p>
 
       <div className="no-scrollbar -mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-2 pt-3 sm:-mx-6 sm:px-6 md:mx-0 md:grid md:grid-cols-3 md:gap-4 md:overflow-visible md:px-0 md:pb-0">
         {plans.map((plan) => {
@@ -161,7 +228,9 @@ export default function BillingView({ plans, current, usage, payments, configure
                 <button className={featured ? 'btn-primary' : 'btn-ghost'} disabled={!configured || Boolean(busy)} onClick={() => checkout(id)}>
                   {busy === id
                     ? 'Opening…'
-                    : isCurrent && current.status.onTrial
+                    : mode === 'autopay'
+                      ? `Autopay ${plan.name}`
+                      : isCurrent && current.status.onTrial
                       ? `Subscribe to ${plan.name}`
                       : isCurrent
                         ? 'Extend plan'
@@ -183,10 +252,10 @@ export default function BillingView({ plans, current, usage, payments, configure
             {payments.map((p) => (
               <li key={p.id} className="flex flex-wrap justify-between gap-x-3 gap-y-0.5 py-2.5 sm:py-2">
                 <span>
-                  {nameOf(p.plan)} · <span className="text-muted">{p.period}</span>
+                  {nameOf(p.plan)} · <span className="text-muted">{p.period}</span> <span className="chip ml-1 bg-surface-2 text-muted ring-line">{METHOD[p.method] ?? p.method}</span>
                 </span>
                 <span className="tabular-nums text-muted">
-                  {formatINR(p.amount)} · {new Date(p.paidAt).toLocaleDateString()}
+                  {formatINR(p.amount)} · {fmtDate(p.paidAt)}
                 </span>
               </li>
             ))}

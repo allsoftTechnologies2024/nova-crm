@@ -12,6 +12,11 @@ const PlatformSettingsSchema = new mongoose.Schema(
       days: { type: Number, default: 30, min: 1, max: 365 },
     },
     fallbackPlanKey: { type: String, default: LOCK_PLAN_KEY }, // used when there's no trial/subscription, or it ended; LOCK_PLAN_KEY = lock
+    // AI models workspaces may use ("provider:model" keys) and the default for new / unset workspaces.
+    ai: {
+      enabledModels: { type: [String], default: undefined }, // unset = every model in the registry
+      defaultModel: { type: String, default: '' },
+    },
     catalogVersion: { type: Number, default: 0 }, // bumped on every plan/settings change so all servers reload
   },
   { timestamps: true }

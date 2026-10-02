@@ -22,11 +22,13 @@ interface Props {
     suspended: boolean;
     limitOverrides: { seats: number | null; leads: number | null; aiCredits: number | null };
     ai: { provider: ProviderId; model: string };
+    aiPolicy: { allowed: string[] | null; locked: boolean };
     aiUsed: number;
     leads: number;
     createdAt: string;
     members: AdminUser[];
-    payments: { id: string; plan: string; period: string; amount: number; status: string; at: string }[];
+    payments: { id: string; plan: string; period: string; amount: number; status: string; method: string; reference: string; recordedBy: string; at: string }[];
+    autopay: { plan: string; period: 'monthly' | 'yearly'; status: string; on: boolean; cancelAtCycleEnd: boolean; currentEnd: string | null } | null;
   };
   models: { provider: ProviderId; model: string; label: string; available: boolean }[];
   plans: Plan[];
@@ -228,32 +230,7 @@ export default function OrgDetail({ org, models, plans, trial }: Props) {
       </div>
 
       <div className="grid gap-6 xl:grid-cols-2">
-        <Card icon={<Sparkles className="size-5" />} title="AI" description={`${org.aiUsed} actions used this month.`}>
-          <div className="flex flex-wrap items-end gap-3">
-            <label className="block min-w-56 flex-1">
-              <span className="label">Model for this workspace</span>
-              <Select
-                aria-label="AI model"
-                value={`${org.ai.provider}:${org.ai.model || PROVIDERS[org.ai.provider].defaultModel}`}
-                placeholder="Default model"
-                onChange={(v) => {
-                  const [provider, model] = v.split(':');
-                  patch({ ai: { provider, model } }, 'AI model updated.');
-                }}
-                options={models.map((m) => ({
-                  value: `${m.provider}:${m.model}`,
-                  label: m.label.split(' · ')[0],
-                  hint: m.available ? m.label.split(' · ')[1] : 'API key not set',
-                  disabled: !m.available,
-                  group: m.provider === 'claude' ? 'Claude (Anthropic)' : 'Gemini (Google)',
-                }))}
-              />
-            </label>
-            <button className="btn-ghost" disabled={busy} onClick={() => confirm('Reset this month’s AI usage to 0?') && patch({ resetAiUsage: true }, 'AI usage reset.')}>
-              <RotateCcw className="size-4" /> Reset usage
-            </button>
-          </div>
-        </Card>
+        <AiCard org={org} models={models} busy={busy} patch={patch} />
 
         <Card icon={org.suspended ? <PlayCircle className="size-5" /> : <Ban className="size-5" />} title="Access" description="Suspended workspaces can't sign in. Data is kept.">
           <div className="flex flex-wrap items-center justify-between gap-3">
@@ -299,24 +276,7 @@ export default function OrgDetail({ org, models, plans, trial }: Props) {
         </div>
       </Card>
 
-      {org.payments.length > 0 && (
-        <Card icon={<CalendarClock className="size-5" />} title="Payments">
-          <ul className="divide-y divide-line text-sm">
-            {org.payments.map((p) => (
-              <li key={p.id} className="flex items-center justify-between py-2.5">
-                <span>
-                  {planById(p.plan)?.name ?? p.plan} · <span className="text-muted">{p.period}</span>
-                </span>
-                <span className="flex items-center gap-3">
-                  <span className={`chip ${p.status === 'paid' ? 'bg-success/10 text-success ring-success/20' : 'bg-surface-2 text-muted ring-line'}`}>{p.status}</span>
-                  <span className="tabular-nums">{inr(p.amount / 100)}</span>
-                  <span className="text-xs text-muted">{new Date(p.at).toLocaleDateString('en-IN')}</span>
-                </span>
-              </li>
-            ))}
-          </ul>
-        </Card>
-      )}
+      <PaymentsCard org={org} plans={plans} patchDone={() => router.refresh()} />
 
       <Card icon={<Trash2 className="size-5" />} title="Danger zone" description="Permanently deletes the workspace, its members, leads, chats and payment records." tone="danger">
         <button className="btn-danger" onClick={() => setDeleting(true)}>
@@ -354,5 +314,306 @@ export default function OrgDetail({ org, models, plans, trial }: Props) {
         </div>
       </Modal>
     </div>
+  );
+}
+
+// ---------- AI policy for one workspace ----------
+
+function AiCard({
+  org,
+  models,
+  busy,
+  patch,
+}: {
+  org: Props['org'];
+  models: Props['models'];
+  busy: boolean;
+  patch: (body: Record<string, unknown>, message: string) => Promise<void>;
+}) {
+  const key = (m: { provider: string; model: string }) => `${m.provider}:${m.model}`;
+  const [custom, setCustom] = useState(Boolean(org.aiPolicy.allowed));
+  const [allowed, setAllowed] = useState<string[]>(org.aiPolicy.allowed ?? models.map(key));
+  const [locked, setLocked] = useState(org.aiPolicy.locked);
+  const policyDirty =
+    custom !== Boolean(org.aiPolicy.allowed) || locked !== org.aiPolicy.locked || (custom && JSON.stringify([...allowed].sort()) !== JSON.stringify([...(org.aiPolicy.allowed ?? [])].sort()));
+  const current = org.ai.model ? `${org.ai.provider}:${org.ai.model}` : '';
+
+  return (
+    <Card icon={<Sparkles className="size-5" />} title="AI" description={`${org.aiUsed} actions used this month.`}>
+      <div className="space-y-5">
+        <div className="flex flex-wrap items-end gap-3">
+          <label className="block min-w-56 flex-1">
+            <span className="label">Model for this workspace</span>
+            <Select
+              aria-label="AI model"
+              value={current}
+              onChange={(v) => {
+                const [provider, model] = v ? v.split(':') : [org.ai.provider, ''];
+                patch({ ai: { provider, model } }, 'AI model updated.');
+              }}
+              options={[
+                { value: '', label: 'Platform default', hint: 'Follows the default set under AI models' },
+                ...models.map((m) => ({
+                  value: key(m),
+                  label: m.label.split(' · ')[0],
+                  hint: m.available ? m.label.split(' · ')[1] : 'API key not set',
+                  disabled: !m.available,
+                  group: m.provider === 'claude' ? 'Claude (Anthropic)' : 'Gemini (Google)',
+                })),
+              ]}
+            />
+          </label>
+          <button className="btn-ghost" disabled={busy} onClick={() => confirm('Reset this month’s AI usage to 0?') && patch({ resetAiUsage: true }, 'AI usage reset.')}>
+            <RotateCcw className="size-4" /> Reset usage
+          </button>
+        </div>
+
+        <div className="rounded-2xl bg-surface-2 p-4">
+          <div className="flex flex-wrap items-center gap-3">
+            <span className="mr-auto text-sm font-semibold">Allowed models</span>
+            <Select
+              size="sm"
+              className="w-44"
+              aria-label="Allowed models"
+              value={custom ? 'custom' : 'platform'}
+              onChange={(v) => setCustom(v === 'custom')}
+              options={[
+                { value: 'platform', label: 'Platform list', hint: 'Same as every workspace' },
+                { value: 'custom', label: 'Custom for this workspace', hint: 'Can include models disabled platform-wide' },
+              ]}
+            />
+          </div>
+          {custom && (
+            <div className="mt-3 grid gap-2 sm:grid-cols-2">
+              {models.map((m) => (
+                <label key={key(m)} className="flex items-center gap-2 rounded-xl bg-surface px-3 py-2 text-sm">
+                  <input
+                    type="checkbox"
+                    className="accent-[#151515]"
+                    checked={allowed.includes(key(m))}
+                    onChange={(e) => setAllowed(e.target.checked ? [...allowed, key(m)] : allowed.filter((k) => k !== key(m)))}
+                  />
+                  {m.label.split(' · ')[0]}
+                </label>
+              ))}
+            </div>
+          )}
+          <label className="mt-3 flex items-center gap-3 text-sm">
+            <input type="checkbox" className="accent-[#151515]" checked={locked} onChange={(e) => setLocked(e.target.checked)} />
+            <span>
+              <span className="font-semibold">Lock model</span> <span className="text-muted">— the workspace can't change it in Settings</span>
+            </span>
+          </label>
+          <div className="mt-3 flex justify-end">
+            <button
+              className="btn-primary py-2"
+              disabled={busy || !policyDirty || (custom && allowed.length === 0)}
+              onClick={() => patch({ aiPolicy: { allowed: custom ? allowed : null, locked } }, 'AI policy saved.')}
+            >
+              Save AI policy
+            </button>
+          </div>
+        </div>
+      </div>
+    </Card>
+  );
+}
+
+// ---------- Payments: history, autopay, offline payments, payment links ----------
+
+const METHOD_LABEL: Record<string, string> = { checkout: 'Checkout', subscription: 'Autopay', link: 'Payment link', manual: 'Offline' };
+
+function PaymentsCard({ org, plans, patchDone }: { org: Props['org']; plans: Plan[]; patchDone: () => void }) {
+  const paid = plans.filter((p) => !isFree(p));
+  const [modal, setModal] = useState<'' | 'manual' | 'link'>('');
+  const [form, setForm] = useState({ plan: paid[0]?.id ?? '', period: 'monthly' as 'monthly' | 'yearly', amount: '', reference: '', note: '', notify: true });
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+  const [linkUrl, setLinkUrl] = useState('');
+  const planOf = (id: string) => plans.find((p) => p.id === id);
+  const defaultRupees = () => {
+    const p = planOf(form.plan);
+    return p ? String((form.period === 'yearly' ? p.priceYearly : p.priceMonthly) / 100) : '';
+  };
+  const amountPaise = Math.round((Number(form.amount || defaultRupees()) || 0) * 100);
+
+  function open(kind: 'manual' | 'link') {
+    setError('');
+    setLinkUrl('');
+    setForm((f) => ({ ...f, amount: '' }));
+    setModal(kind);
+  }
+
+  async function submit() {
+    setBusy(true);
+    setError('');
+    try {
+      if (modal === 'manual') {
+        await api(`/api/admin/orgs/${org.id}/manual-payment`, { body: { plan: form.plan, period: form.period, amount: amountPaise, reference: form.reference, note: form.note } });
+        setModal('');
+        patchDone();
+      } else {
+        const res = await api<{ url: string }>(`/api/admin/orgs/${org.id}/payment-link`, { body: { plan: form.plan, period: form.period, amount: amountPaise, notify: form.notify } });
+        setLinkUrl(res.url);
+        patchDone();
+      }
+    } catch (err) {
+      setError(errorText(err));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function stopAutopay() {
+    if (!confirm('Turn off Autopay for this workspace? No further charges; paid time stays.')) return;
+    try {
+      await api(`/api/admin/orgs/${org.id}/autopay-cancel`, { method: 'POST', body: {} });
+      patchDone();
+    } catch (err) {
+      alert(errorText(err));
+    }
+  }
+
+  return (
+    <Card icon={<CalendarClock className="size-5" />} title="Payments" description="Payment history, Autopay, and payments you collect for this workspace.">
+      <div className="flex flex-wrap gap-2">
+        <button className="btn-primary" onClick={() => open('link')} disabled={!paid.length}>
+          Send payment link
+        </button>
+        <button className="btn-ghost" onClick={() => open('manual')} disabled={!paid.length}>
+          Record offline payment
+        </button>
+      </div>
+
+      <div className="mt-4 flex flex-wrap items-center gap-3 rounded-2xl bg-surface-2 px-4 py-3 text-sm">
+        <span className="mr-auto">
+          <b>Autopay:</b>{' '}
+          {org.autopay
+            ? `${org.autopay.on ? 'on' : org.autopay.cancelAtCycleEnd ? 'turned off (ends with current period)' : org.autopay.status} · ${planOf(org.autopay.plan)?.name ?? org.autopay.plan} (${org.autopay.period})${
+                org.autopay.currentEnd ? ` · cycle ends ${new Date(org.autopay.currentEnd).toLocaleDateString('en-IN')}` : ''
+              }`
+            : 'not set up'}
+        </span>
+        {org.autopay?.on && (
+          <button className="btn-danger py-1.5 text-xs" onClick={stopAutopay}>
+            Turn off Autopay
+          </button>
+        )}
+      </div>
+
+      {org.payments.length > 0 ? (
+        <ul className="mt-4 divide-y divide-line text-sm">
+          {org.payments.map((p) => (
+            <li key={p.id} className="flex flex-wrap items-center justify-between gap-2 py-2.5">
+              <span className="min-w-0">
+                {planOf(p.plan)?.name ?? p.plan} · <span className="text-muted">{p.period}</span>{' '}
+                <span className="chip ml-1 bg-surface-2 text-muted ring-line">{METHOD_LABEL[p.method] ?? p.method}</span>
+                {p.reference && (
+                  <span className="mt-0.5 block truncate text-xs text-muted">
+                    {p.reference.startsWith('http') ? (
+                      <a href={p.reference} target="_blank" rel="noreferrer" className="underline underline-offset-2">
+                        {p.reference}
+                      </a>
+                    ) : (
+                      `Ref: ${p.reference}`
+                    )}
+                    {p.recordedBy && ` · by ${p.recordedBy}`}
+                  </span>
+                )}
+              </span>
+              <span className="flex items-center gap-3">
+                <span className={`chip ${p.status === 'paid' ? 'bg-success/10 text-success ring-success/20' : 'bg-amber-50 text-amber-700 ring-amber-200'}`}>
+                  {p.status === 'paid' ? 'paid' : p.method === 'link' ? 'link sent' : 'pending'}
+                </span>
+                <span className="tabular-nums">{inr(p.amount / 100)}</span>
+                <span className="text-xs text-muted">{new Date(p.at).toLocaleDateString('en-IN')}</span>
+              </span>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="mt-4 text-sm text-muted">No payments yet.</p>
+      )}
+
+      <Modal open={modal !== ''} onClose={() => setModal('')} title={modal === 'manual' ? 'Record offline payment' : 'Send payment link'}>
+        {linkUrl ? (
+          <div className="space-y-4">
+            <p className="text-sm">
+              Payment link created{form.notify ? ' and emailed to the workspace owner' : ''}. When it's paid, the plan extends automatically.
+            </p>
+            <div className="flex items-center gap-2 rounded-2xl bg-surface-2 p-2 pl-4">
+              <code className="min-w-0 flex-1 truncate text-sm">{linkUrl}</code>
+              <button className="btn-primary py-2" onClick={() => navigator.clipboard.writeText(linkUrl)}>
+                Copy
+              </button>
+            </div>
+            <div className="flex justify-end">
+              <button className="btn-ghost" onClick={() => setModal('')}>
+                Done
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            <div className="grid gap-3 sm:grid-cols-2">
+              <label className="block">
+                <span className="label">Plan</span>
+                <Select
+                  aria-label="Plan"
+                  value={form.plan}
+                  onChange={(plan) => setForm({ ...form, plan, amount: '' })}
+                  options={paid.map((p) => ({ value: p.id, label: p.name, hint: `${formatINR(p.priceMonthly)}/mo` }))}
+                />
+              </label>
+              <label className="block">
+                <span className="label">Period</span>
+                <Select
+                  aria-label="Period"
+                  value={form.period}
+                  onChange={(period) => setForm({ ...form, period, amount: '' })}
+                  options={[
+                    { value: 'monthly', label: 'Monthly (1 month)' },
+                    { value: 'yearly', label: 'Yearly (12 months)' },
+                  ]}
+                />
+              </label>
+            </div>
+            <label className="block">
+              <span className="label">Amount (₹) — defaults to the plan price</span>
+              <input className="input" type="number" min={modal === 'link' ? 1 : 0} value={form.amount} placeholder={defaultRupees()} onChange={(e) => setForm({ ...form, amount: e.target.value })} />
+            </label>
+            {modal === 'manual' ? (
+              <>
+                <label className="block">
+                  <span className="label">Reference (UTR / UPI ref / receipt no.)</span>
+                  <input className="input" maxLength={120} value={form.reference} onChange={(e) => setForm({ ...form, reference: e.target.value })} />
+                </label>
+                <label className="block">
+                  <span className="label">Note (optional)</span>
+                  <input className="input" maxLength={300} value={form.note} onChange={(e) => setForm({ ...form, note: e.target.value })} />
+                </label>
+                <p className="rounded-2xl bg-surface-2 px-4 py-3 text-xs text-muted">
+                  The workspace gets {form.period === 'yearly' ? '12 months' : '1 month'} of {planOf(form.plan)?.name} immediately (added on top of remaining paid time on the same plan).
+                </p>
+              </>
+            ) : (
+              <label className="flex items-center gap-2 text-sm">
+                <input type="checkbox" className="accent-[#151515]" checked={form.notify} onChange={(e) => setForm({ ...form, notify: e.target.checked })} />
+                Email the link to the workspace owner (via Razorpay)
+              </label>
+            )}
+            <ErrorText>{error}</ErrorText>
+            <div className="flex justify-end gap-2">
+              <button className="btn-ghost" onClick={() => setModal('')}>
+                Cancel
+              </button>
+              <button className="btn-primary" disabled={busy || !form.plan || (modal === 'link' && amountPaise < 100)} onClick={submit}>
+                {busy ? 'Saving…' : modal === 'manual' ? `Record ${inr(amountPaise / 100)} & extend plan` : `Create ${inr(amountPaise / 100)} link`}
+              </button>
+            </div>
+          </div>
+        )}
+      </Modal>
+    </Card>
   );
 }

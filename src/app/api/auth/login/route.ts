@@ -16,7 +16,8 @@ export const POST = route(async (req) => {
   rateLimit(`login:${email.toLowerCase()}`, 10, 15 * 60_000);
   await connectDB();
   const user = await User.findOne({ email: email.toLowerCase() }).select('+passwordHash');
-  if (!user || !(await bcrypt.compare(password, user.passwordHash))) throw new HttpError(401, 'Wrong email or password.');
+  if (user && !user.passwordHash) throw new HttpError(401, 'This account uses Google sign-in. Use "Continue with Google", or reset your password to add one.');
+  if (!user?.passwordHash || !(await bcrypt.compare(password, user.passwordHash))) throw new HttpError(401, 'Wrong email or password.');
   if (!user.active) throw new HttpError(403, 'Your access has been turned off. Ask your workspace admin.');
   const org = await Organization.findById(user.orgId, { suspended: 1 }).lean();
   if (org?.suspended) throw new HttpError(403, 'This workspace has been suspended. Contact support.');

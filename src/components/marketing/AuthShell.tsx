@@ -6,7 +6,7 @@ import { Logo } from '@/components/ui';
 
 const ACTIVITY = [
   { icon: Mic, time: '9:02 AM', text: 'Captured Mehta Logistics from a voice note', accent: false },
-  { icon: Sparkles, time: '9:02 AM', text: 'Scored 82 · hot lead, ₹3L budget', accent: false },
+  { icon: Sparkles, time: '9:02 AM', text: 'Scored 82 · hot deal, ₹3L budget', accent: false },
   { icon: Mail, time: '9:03 AM', text: 'Drafted a follow-up email for Rahul', accent: false },
   { icon: Bot, time: '9:05 AM', text: 'Moved Acme Corp to Proposal, reminder set for Friday', accent: true },
 ];

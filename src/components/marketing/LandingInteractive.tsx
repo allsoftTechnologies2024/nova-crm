@@ -12,7 +12,7 @@ const STEPS: { bg: string; tag: string; title: string; text: string; demo: React
     bg: 'bg-tang',
     tag: '@capture',
     title: 'Talk, paste or snap.',
-    text: 'A voice note, a WhatsApp thread or a business card photo becomes a clean lead with company, contact, budget and follow-up.',
+    text: 'A voice note, a WhatsApp thread or a business card photo becomes a clean customer record with company, contact, budget and follow-up.',
     demo: (
       <div className="space-y-3">
         <p className="rounded-2xl rounded-bl-sm bg-white/20 p-4 text-sm leading-relaxed text-white backdrop-blur">
@@ -38,7 +38,7 @@ const STEPS: { bg: string; tag: string; title: string; text: string; demo: React
   {
     bg: 'bg-cobalt',
     tag: '@score',
-    title: 'Every lead, scored.',
+    title: 'Every deal, prioritised.',
     text: 'A 0–100 score, a one-line read on the deal and the single best next step, refreshed as the conversation moves.',
     demo: (
       <div className="rounded-3xl bg-white p-5 text-ink shadow-xl">
@@ -59,7 +59,7 @@ const STEPS: { bg: string; tag: string; title: string; text: string; demo: React
     bg: 'bg-berry',
     tag: '@follow-up',
     title: 'Follow-ups, written.',
-    text: 'Personal email and WhatsApp drafts built from the full lead history. Review, tweak, send.',
+    text: 'Personal email and WhatsApp drafts built from the full customer history. Review, tweak, send.',
     demo: (
       <div className="rounded-3xl bg-white p-5 text-sm text-ink shadow-xl">
         <p className="text-xs text-ink-soft">To: rahul@mehtalogistics.in</p>
@@ -149,7 +149,7 @@ const ROLE_VIEWS = {
   Rep: [
     { bg: 'bg-sun', k: 'Calls today', v: '6' },
     { bg: 'bg-white', k: 'Drafts ready', v: '4' },
-    { bg: 'bg-tang text-white', k: 'Hot leads', v: '3' },
+    { bg: 'bg-tang text-white', k: 'Hot deals', v: '3' },
     { bg: 'bg-cobalt text-white', k: 'My pipeline', v: '₹8.4L' },
     { bg: 'bg-zest', k: 'Won this month', v: '₹2.1L' },
     { bg: 'bg-ink text-white', k: 'Overdue', v: '1' },
@@ -196,12 +196,12 @@ export function RoleTabs() {
 /* ---------- Horizontal feature slider with progress bar ---------- */
 
 const FEATURES = [
-  { icon: ImagePlus, bg: 'bg-tang', title: 'AI capture', text: 'Notes, chats or a card photo in, clean leads out.' },
+  { icon: ImagePlus, bg: 'bg-tang', title: 'AI capture', text: 'Notes, chats or a card photo in, clean customer records out.' },
   { icon: Wand2, bg: 'bg-sun', title: 'Tell it what happened', text: 'Stage, value and follow-up update themselves.' },
-  { icon: Gauge, bg: 'bg-cobalt', title: 'Lead scoring', text: 'A 0–100 score and the best next step.' },
+  { icon: Gauge, bg: 'bg-cobalt', title: 'Deal scoring', text: 'A 0–100 score and the best next step.' },
   { icon: Bot, bg: 'bg-ink', title: 'Copilot that acts', text: 'Ask a question or give an order, it does the work.' },
   { icon: Mail, bg: 'bg-berry', title: 'Follow-ups written', text: 'Email and WhatsApp drafts from the full history.' },
-  { icon: ShieldCheck, bg: 'bg-moss', title: 'Role-based access', text: 'Agents only see their own leads, even through AI.' },
+  { icon: ShieldCheck, bg: 'bg-moss', title: 'Role-based access', text: 'Agents only see their own customers, even through AI.' },
 ];
 
 export function FeatureSlider() {

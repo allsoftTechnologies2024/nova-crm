@@ -20,6 +20,9 @@ const PlanSchema = new mongoose.Schema(
     public: { type: Boolean, default: true },
     popular: { type: Boolean, default: false },
     sortOrder: { type: Number, default: 0 },
+    // Razorpay plan ids for Autopay, created on demand: { monthly: { id, amount, keyId }, yearly: { … } }.
+    // A new Razorpay plan is created whenever the price or the API key (test → live) changes.
+    razorpayPlans: { type: mongoose.Schema.Types.Mixed, default: {} },
   },
   { timestamps: true }
 );

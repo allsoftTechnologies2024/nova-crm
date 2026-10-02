@@ -19,6 +19,7 @@ export interface AuthContext {
     plan: PlanId;
     planExpiresAt: Date | null;
     ai: { provider: 'claude' | 'gemini'; model: string };
+    aiPolicy: { allowed: string[] | null; locked: boolean }; // platform override of allowed AI models
     aiUsage: { month: string; count: number };
   };
   plan: Plan; // effective plan right now (expired trial/subscription → fallback plan; admin limit overrides applied)
@@ -70,6 +71,7 @@ export const getAuth = cache(async (): Promise<AuthContext | null> => {
       plan: (org.plan ?? '') as PlanId,
       planExpiresAt: org.planExpiresAt ?? null,
       ai: { provider: (org.ai?.provider as 'claude' | 'gemini') || 'gemini', model: org.ai?.model || '' },
+      aiPolicy: { allowed: org.aiPolicy?.allowed?.length ? org.aiPolicy.allowed : null, locked: Boolean(org.aiPolicy?.locked) },
       aiUsage: { month: org.aiUsage?.month || '', count: org.aiUsage?.count || 0 },
     },
     plan: {

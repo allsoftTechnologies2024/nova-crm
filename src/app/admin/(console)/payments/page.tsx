@@ -40,6 +40,7 @@ export default async function PaymentsPage() {
                 <td className="px-5 py-3 font-semibold tabular-nums">{formatINR(p.amount)}</td>
                 <td className="px-5 py-3">
                   <span className={`chip ${p.status === 'paid' ? 'bg-success/10 text-success ring-success/20' : 'bg-surface-2 text-muted ring-line'}`}>{p.status}</span>
+                  <span className="chip ml-1 bg-surface-2 text-muted ring-line">{({ checkout: 'Checkout', subscription: 'Autopay', link: 'Link', manual: 'Offline' } as Record<string, string>)[p.method] ?? p.method}</span>
                 </td>
                 <td className="px-5 py-3 font-mono text-xs text-muted">
                   {p.orderId}

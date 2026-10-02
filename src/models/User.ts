@@ -7,7 +7,8 @@ const UserSchema = new mongoose.Schema(
     orgId: { type: mongoose.Schema.Types.ObjectId, ref: 'Organization', required: true, index: true },
     name: { type: String, required: true, trim: true },
     email: { type: String, required: true, trim: true, lowercase: true, unique: true },
-    passwordHash: { type: String, required: true, select: false },
+    passwordHash: { type: String, default: null, select: false }, // null for Google-only accounts
+    googleId: { type: String, default: undefined, index: { unique: true, sparse: true } }, // Google's stable user id, once linked
     role: { type: String, enum: ROLES, default: 'agent' },
     active: { type: Boolean, default: true },
     // Sessions issued before this are rejected (set on password change / reset).

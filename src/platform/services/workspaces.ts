@@ -5,6 +5,8 @@ import { PROVIDERS } from '@/lib/ai/models';
 import { connectDB } from '@/lib/db';
 import { badRequest, notFound } from '@/lib/http';
 import type { PlanId, PlanSource } from '@/lib/plans';
+import { ALL_MODEL_KEYS } from '@/lib/ai/models';
+import { autopayStatus } from '@/lib/services/billing';
 import { allPlans, getPlan, getSettings } from '@/lib/services/plans';
 import type { Role } from '@/lib/rbac';
 import { logActivity, systemActor } from '@/lib/services/activity';
@@ -88,11 +90,23 @@ export async function getOrgDetail(id: string) {
     suspended: Boolean(org.suspended),
     limitOverrides: { seats: org.limitOverrides?.seats ?? null, leads: org.limitOverrides?.leads ?? null, aiCredits: org.limitOverrides?.aiCredits ?? null },
     ai: { provider: (org.ai?.provider as 'claude' | 'gemini') || 'gemini', model: org.ai?.model || '' },
+    aiPolicy: { allowed: org.aiPolicy?.allowed?.length ? org.aiPolicy.allowed : null, locked: Boolean(org.aiPolicy?.locked) },
     aiUsed: org.aiUsage?.month === month() ? (org.aiUsage.count ?? 0) : 0,
     leads,
     createdAt: iso(org.createdAt as Date)!,
     members: members.map((u) => ({ id: String(u._id), name: u.name, email: u.email, role: u.role as Role, active: u.active })),
-    payments: payments.map((p) => ({ id: String(p._id), plan: p.plan, period: p.period, amount: p.amount, status: p.status, at: iso((p.paidAt ?? p.createdAt) as Date)! })),
+    payments: payments.map((p) => ({
+      id: String(p._id),
+      plan: p.plan,
+      period: p.period,
+      amount: p.amount,
+      status: p.status,
+      method: p.method ?? 'checkout',
+      reference: p.reference ?? '',
+      recordedBy: p.recordedBy ?? '',
+      at: iso((p.paidAt ?? p.createdAt) as Date)!,
+    })),
+    autopay: await autopayStatus(String(org._id)),
   };
 }
 
@@ -106,6 +120,8 @@ export const orgUpdateSchema = z.object({
   resetAiUsage: z.literal(true).optional(),
   startTrial: z.literal(true).optional(), // (re)start the configured free trial
   ai: z.object({ provider: z.enum(['claude', 'gemini']), model: z.string() }).optional(),
+  // null allowed = follow the platform model list; a list = only these models for this workspace.
+  aiPolicy: z.object({ allowed: z.array(z.string().refine((k) => ALL_MODEL_KEYS.includes(k), 'Unknown AI model')).min(1).nullable(), locked: z.boolean() }).optional(),
 });
 
 export async function updateOrg(actor: AdminContext, id: string, input: z.infer<typeof orgUpdateSchema>) {
@@ -155,9 +171,16 @@ export async function updateOrg(actor: AdminContext, id: string, input: z.infer<
     changes.push('AI usage reset');
   }
   if (input.ai) {
-    if (!PROVIDERS[input.ai.provider].models[input.ai.model]) throw badRequest('Unknown AI model.');
+    // An empty model means "use the platform default".
+    if (input.ai.model && !PROVIDERS[input.ai.provider].models[input.ai.model]) throw badRequest('Unknown AI model.');
     org.ai = input.ai;
-    changes.push(`AI → ${input.ai.model}`);
+    changes.push(`AI → ${input.ai.model || 'platform default'}`);
+  }
+  if (input.aiPolicy) {
+    org.aiPolicy = { allowed: input.aiPolicy.allowed ?? undefined, locked: input.aiPolicy.locked };
+    changes.push(
+      `AI models → ${input.aiPolicy.allowed ? `custom (${input.aiPolicy.allowed.map((k) => k.split(':')[1]).join(', ')})` : 'platform list'}${input.aiPolicy.locked ? ', locked' : ''}`
+    );
   }
   if (!changes.length) return;
   await org.save();

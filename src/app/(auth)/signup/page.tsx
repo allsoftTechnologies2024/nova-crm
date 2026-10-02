@@ -1,5 +1,6 @@
 import Link from 'next/link';
-import { SignupForm } from '@/components/app/AuthForms';
+import { GoogleButton, SignupForm } from '@/components/app/AuthForms';
+import { googleConfigured } from '@/lib/auth/google';
 import AuthShell from '@/components/marketing/AuthShell';
 import { getPlan, getSettings } from '@/lib/services/plans';
 
@@ -25,6 +26,7 @@ export default async function SignupPage() {
         </>
       }
     >
+      {googleConfigured() && <GoogleButton />}
       <SignupForm trialDays={await trialDays()} />
     </AuthShell>
   );

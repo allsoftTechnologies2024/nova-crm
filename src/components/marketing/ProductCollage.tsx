@@ -10,7 +10,7 @@ export default function ProductCollage({ compact = false }: { compact?: boolean 
       <div className="panel-brand relative overflow-hidden p-5">
         <div className="flex items-center justify-between">
           <p className="font-bold">Overview</p>
-          <span className="rounded-full bg-white px-2.5 py-0.5 text-[10px] font-bold text-brand">Leads</span>
+          <span className="rounded-full bg-white px-2.5 py-0.5 text-[10px] font-bold text-brand">Pipeline</span>
         </div>
         <svg viewBox="0 0 300 90" className="mt-3 h-24 w-full" preserveAspectRatio="none">
           <defs>
@@ -29,7 +29,7 @@ export default function ProductCollage({ compact = false }: { compact?: boolean 
             <p className="text-base font-bold">₹31.2L</p>
           </div>
           <div className="rounded-2xl bg-white/12 py-1 ring-1 ring-white/15">
-            <p className="text-white/70">New leads</p>
+            <p className="text-white/70">New contacts</p>
             <p className="text-base font-bold">24</p>
           </div>
           <div>
@@ -69,7 +69,7 @@ export default function ProductCollage({ compact = false }: { compact?: boolean 
           <Bot className="size-3.5 text-brand" /> Copilot
         </p>
         <p className="mt-1.5 text-xs leading-relaxed">
-          Call <b>Mehta Logistics</b> first — hot lead, proposal due Friday. I moved it to <b>Proposal</b> ✓
+          Call <b>Mehta Logistics</b> first — hot deal, proposal due Friday. I moved it to <b>Proposal</b> ✓
         </p>
       </div>
 

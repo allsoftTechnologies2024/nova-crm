@@ -1,5 +1,5 @@
 import Copilot from '@/components/ai/Copilot';
-import { resolveModel } from '@/lib/ai';
+import { resolveForOrg } from '@/lib/ai';
 import { requirePage } from '@/lib/auth/session';
 import { getConversation, listConversations } from '@/lib/services/conversations';
 
@@ -13,7 +13,7 @@ export default async function CopilotPage({ searchParams }: PageProps<'/app/copi
     listConversations(auth),
     chatId ? getConversation(auth, chatId).catch(() => null) : Promise.resolve(null),
   ]);
-  const model = resolveModel(auth.org.ai);
+  const model = await resolveForOrg(auth.org);
 
   return (
     <Copilot

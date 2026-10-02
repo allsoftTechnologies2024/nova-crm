@@ -248,14 +248,25 @@ const RANGES = [
   { value: '', label: 'All time' },
 ];
 
-function dayLabel(iso: string) {
+// Server render and hydration both use India time so the markup matches; after mount we switch to the
+// viewer's own time zone (see useViewerTimeZone), which can regroup items across midnight.
+const SERVER_TZ = 'Asia/Kolkata';
+const dayKey = (d: Date, timeZone: string) => new Intl.DateTimeFormat('en-CA', { timeZone, year: 'numeric', month: '2-digit', day: '2-digit' }).format(d);
+
+function dayLabel(iso: string, timeZone: string) {
   const d = new Date(iso);
-  const today = new Date();
-  const y = new Date(today);
-  y.setDate(today.getDate() - 1);
-  if (d.toDateString() === today.toDateString()) return 'Today';
-  if (d.toDateString() === y.toDateString()) return 'Yesterday';
-  return d.toLocaleDateString([], { weekday: 'long', day: 'numeric', month: 'short', year: d.getFullYear() === today.getFullYear() ? undefined : 'numeric' });
+  const now = new Date();
+  const key = dayKey(d, timeZone);
+  if (key === dayKey(now, timeZone)) return 'Today';
+  if (key === dayKey(new Date(now.getTime() - 86_400_000), timeZone)) return 'Yesterday';
+  const sameYear = key.slice(0, 4) === dayKey(now, timeZone).slice(0, 4);
+  return d.toLocaleDateString('en-IN', { timeZone, weekday: 'long', day: 'numeric', month: 'short', year: sameYear ? undefined : 'numeric' });
+}
+
+function useViewerTimeZone() {
+  const [timeZone, setTimeZone] = useState(SERVER_TZ);
+  useEffect(() => setTimeZone(Intl.DateTimeFormat().resolvedOptions().timeZone || SERVER_TZ), []);
+  return timeZone;
 }
 
 function ActivityLog({ initial, members, viewAll }: { initial: Props['initial']; members: MemberStats[]; viewAll: boolean }) {
@@ -302,15 +313,16 @@ function ActivityLog({ initial, members, viewAll }: { initial: Props['initial'];
   // Leads deleted later shouldn't link to a 404.
   const deleted = useMemo(() => new Set(items.filter((i) => i.action === 'lead.deleted').map((i) => i.entity?.id)), [items]);
 
+  const timeZone = useViewerTimeZone();
   const groups = useMemo(() => {
     const out: { day: string; rows: ActivityDTO[] }[] = [];
     for (const it of items) {
-      const day = dayLabel(it.at);
+      const day = dayLabel(it.at, timeZone);
       if (out[out.length - 1]?.day === day) out[out.length - 1].rows.push(it);
       else out.push({ day, rows: [it] });
     }
     return out;
-  }, [items]);
+  }, [items, timeZone]);
 
   return (
     <section className="card overflow-hidden">

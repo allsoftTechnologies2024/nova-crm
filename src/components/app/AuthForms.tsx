@@ -37,6 +37,32 @@ function useSubmit(fn: () => Promise<void>) {
   return { busy, error, setError, onSubmit };
 }
 
+// Google's "G" mark, as their sign-in branding guidelines ask for on a "Continue with Google" button.
+function GoogleMark() {
+  return (
+    <svg viewBox="0 0 48 48" className="size-5" aria-hidden>
+      <path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z" />
+      <path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z" />
+      <path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z" />
+      <path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z" />
+    </svg>
+  );
+}
+
+// Same button on sign-in and sign-up: an existing account signs in, a new Google account creates a workspace.
+export function GoogleButton() {
+  return (
+    <>
+      <a href="/api/auth/google" className="btn-ghost w-full bg-white py-3 ring-1 ring-black/10">
+        <GoogleMark /> Continue with Google
+      </a>
+      <div className="my-5 flex items-center gap-3 text-xs text-muted">
+        <span className="h-px flex-1 bg-black/10" /> or with email <span className="h-px flex-1 bg-black/10" />
+      </div>
+    </>
+  );
+}
+
 export function LoginForm() {
   const router = useRouter();
   const [email, setEmail] = useState('');
@@ -175,6 +201,31 @@ export function ResetForm({ token }: { token: string }) {
       <button className="btn-primary w-full py-3" disabled={busy || pw.next.length < 8 || pw.next !== pw.confirm}>
         {busy ? 'Saving…' : 'Set new password'}
       </button>
+    </form>
+  );
+}
+
+// Last step of Google sign-up: the email is already verified by Google, so only the names are asked.
+export function GoogleWorkspaceForm({ name: initialName, email, trialDays }: { name: string; email: string; trialDays: number | null }) {
+  const router = useRouter();
+  const [form, setForm] = useState({ name: initialName, company: '' });
+  const { busy, error, onSubmit } = useSubmit(async () => {
+    await api('/api/auth/google/complete', { body: form });
+    router.replace('/app');
+    router.refresh();
+  });
+  return (
+    <form onSubmit={onSubmit} className="space-y-4">
+      <p className="flex items-center gap-2 rounded-2xl bg-surface-2 px-4 py-3 text-sm">
+        <GoogleMark /> <span className="truncate">{email}</span>
+      </p>
+      <Field icon={UserRound} label="Your name" autoComplete="name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Priya Sharma" />
+      <Field icon={Building2} label="Company" autoComplete="organization" value={form.company} onChange={(e) => setForm({ ...form, company: e.target.value })} placeholder="Acme Pvt Ltd" autoFocus />
+      <ErrorText>{error}</ErrorText>
+      <button className="btn-primary w-full py-3" disabled={busy}>
+        {busy ? 'Creating workspace…' : 'Create free workspace'}
+      </button>
+      <p className="text-center text-xs text-muted">{trialDays ? `${trialDays}-day free trial` : 'Free trial'} · no card needed</p>
     </form>
   );
 }
