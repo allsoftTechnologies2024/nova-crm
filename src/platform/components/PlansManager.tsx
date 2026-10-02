@@ -237,7 +237,7 @@ function TrialSettings({ plans, settings }: { plans: AdminPlan[]; settings: Sett
             value={form.trial.planKey}
             disabled={!form.trial.enabled}
             onChange={(planKey) => setForm({ ...form, trial: { ...form.trial, planKey } })}
-            options={options(enabled.filter((p) => !isFree(p)))}
+            options={options(enabled)}
           />
         </Field>
         <Field label="Trial length (days)">

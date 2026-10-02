@@ -107,7 +107,8 @@ export default function BillingView({ plans, current, usage, payments, configure
         <div className="flex flex-wrap items-center gap-3 rounded-2xl bg-brand-2/10 px-4 py-3 text-sm">
           <span className="rounded-full bg-brand-2 px-2.5 py-0.5 text-xs font-bold text-white">Free trial</span>
           <span>
-            You&apos;re trying <b>{current.name}</b> free — <b>{current.status.daysLeft} day{current.status.daysLeft === 1 ? '' : 's'} left</b>. Pick a plan below to keep these features when it ends.
+            You&apos;re on a free trial with <b>{current.name}</b> limits — <b>{current.status.daysLeft} day{current.status.daysLeft === 1 ? '' : 's'} left</b>. Subscribe to a plan below for more seats,
+            leads and AI, and to keep using Smart CRM when the trial ends.
           </span>
         </div>
       )}

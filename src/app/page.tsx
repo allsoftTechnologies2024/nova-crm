@@ -8,7 +8,7 @@ import LegalLinks from '@/components/legal/LegalLinks';
 import Reveal from '@/components/marketing/Reveal';
 import { Logo, ScoreRing } from '@/components/ui';
 import { formatINR, isFree, type Plan } from '@/lib/plans';
-import { getSettings, publicPlans } from '@/lib/services/plans';
+import { getPlan, getSettings, publicPlans } from '@/lib/services/plans';
 
 const PIPELINE = [
   { stage: 'New', bg: 'bg-white', company: 'Zen Foods', value: '₹1.2L', score: 41 },
@@ -60,18 +60,19 @@ function TeamRow({ reverse = false }: { reverse?: boolean }) {
 // Pricing comes from the plans managed in the platform console; refreshed every minute.
 export const revalidate = 60;
 
-async function pricing(): Promise<{ plans: Plan[]; trialDays: number | null }> {
+async function pricing(): Promise<{ plans: Plan[]; trialDays: number | null; trialPlanName: string | null }> {
   try {
     const [plans, settings] = await Promise.all([publicPlans(), getSettings()]);
-    const trial = settings.trial.enabled ? plans.find((p) => p.id === settings.trial.planKey) : null;
-    return { plans, trialDays: trial ? settings.trial.days : null };
+    // The trial plan can be hidden from pricing (e.g. Starter), so look it up directly.
+    const trial = settings.trial.enabled ? await getPlan(settings.trial.planKey) : null;
+    return trial?.active ? { plans, trialDays: settings.trial.days, trialPlanName: trial.name } : { plans, trialDays: null, trialPlanName: null };
   } catch {
-    return { plans: [], trialDays: null }; // e.g. no database during build — next revalidation fills it in
+    return { plans: [], trialDays: null, trialPlanName: null }; // e.g. no database during build — next revalidation fills it in
   }
 }
 
 export default async function Home() {
-  const { plans, trialDays } = await pricing();
+  const { plans, trialDays, trialPlanName } = await pricing();
   return (
     <div className="mk min-h-screen overflow-x-clip bg-[#ebebe8]">
       {/* Framed nav + hero (the white "browser frame" from the reference) */}
@@ -195,6 +196,11 @@ export default async function Home() {
           <p className="eyebrow text-ink-soft">Pricing</p>
           <h2 className="display mt-4 text-5xl sm:text-7xl">Start free. Grow into it.</h2>
           <p className="mx-auto mt-4 max-w-md text-ink-soft">Upgrade with UPI, cards or netbanking via Razorpay.</p>
+          {trialDays && (
+            <p className="mx-auto mt-3 w-fit rounded-full bg-white px-4 py-1.5 text-sm font-medium text-ink ring-1 ring-black/10">
+              Every new workspace starts with a {trialDays}-day free trial{trialPlanName ? ` (${trialPlanName} limits)` : ''} · no card needed
+            </p>
+          )}
         </Reveal>
         <div className="mt-14 grid gap-5 md:grid-cols-3">
           {plans.map((p, i) => {
@@ -223,7 +229,7 @@ export default async function Home() {
                       ))}
                     </ul>
                     <Link href="/signup" className={featured ? 'pill-light ring-0' : 'pill-dark'}>
-                      {isFree(p) ? 'Get started' : trialDays ? `Start ${trialDays}-day free trial` : 'Start free, upgrade anytime'}
+                      {isFree(p) ? 'Get started' : trialDays ? 'Start free trial' : `Get ${p.name}`}
                     </Link>
                   </div>
                 </div>

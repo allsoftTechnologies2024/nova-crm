@@ -21,6 +21,12 @@ if (!trial.enabled || !trialPlan || trialPlan.active === false) {
   process.exit(1);
 }
 
+if (trial.planKey === FREE_KEY) {
+  // Starter has since become the free-trial plan; disabling it now would break every new sign-up.
+  console.error('Starter is the free-trial plan now, so this migration no longer applies. Nothing changed.');
+  process.exit(1);
+}
+
 const orgs = await db.collection('organizations').find({ plan: FREE_KEY }, { projection: { name: 1, plan: 1, planSource: 1 } }).toArray();
 const trialEnds = new Date(Date.now() + trial.days * 86_400_000);
 
