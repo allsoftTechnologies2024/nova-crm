@@ -1,4 +1,5 @@
 import { cookies } from 'next/headers';
+import PlanGate from '@/components/app/PlanGate';
 import SupportBanner from '@/components/app/SupportBanner';
 import Sidebar, { type NavKey } from '@/components/app/Sidebar';
 import TopBar from '@/components/app/TopBar';
@@ -19,6 +20,8 @@ export default async function AppLayout({ children }: LayoutProps<'/app'>) {
   const sidebarOpen = (await cookies()).get(SIDEBAR_COOKIE)?.value === 'open';
   const user = { name: auth.user.name, roleLabel: ROLE_META[auth.user.role].label };
   const canCreate = auth.can('lead:create');
+  // Trial over and nothing paid: lock every page except Billing/Settings (support sessions see the real app).
+  const locked = auth.planStatus.locked && !auth.impersonatedBy;
 
   return (
     <>
@@ -28,7 +31,9 @@ export default async function AppLayout({ children }: LayoutProps<'/app'>) {
         <Sidebar nav={nav} orgName={auth.org.name} defaultOpen={sidebarOpen} user={user} quickAdd={{ lead: canCreate, ai: canCreate && auth.can('ai:use') }} />
         <main className="pb-tabbar min-w-0 flex-1 px-4 sm:px-6 lg:px-8 lg:pb-8">
           <TopBar orgName={auth.org.name} user={user} ai={auth.can('ai:use') ? aiUsage(auth) : null} />
-          {children}
+          <PlanGate locked={locked} canBill={auth.can('billing:manage')}>
+            {children}
+          </PlanGate>
         </main>
       </div>
     </>

@@ -25,8 +25,8 @@ export default async function Dashboard({ searchParams }: PageProps<'/app'>) {
     searchParams,
   ]);
   const ai = aiUsage(auth);
-  const daysLeft = auth.org.planExpiresAt && auth.plan.id !== 'free' ? Math.max(0, Math.ceil((new Date(auth.org.planExpiresAt).getTime() - Date.now()) / 86_400_000)) : null;
-  const planPill = daysLeft !== null ? `${daysLeft} days left` : `${auth.plan.name} plan`;
+  const { daysLeft, onTrial, locked } = auth.planStatus;
+  const planPill = locked ? 'No plan' : onTrial ? `Trial · ${daysLeft} days left` : daysLeft !== null ? `${daysLeft} days left` : `${auth.plan.name} plan`;
 
   const usage = [
     { icon: Users, title: 'Leads', sub: `${auth.plan.name} plan limit`, used: leadCount, limit: auth.plan.limits.leads, unit: 'leads' },

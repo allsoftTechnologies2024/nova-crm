@@ -4,7 +4,8 @@ import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { connectDB } from '@/lib/db';
 import { HttpError, forbidden } from '@/lib/http';
-import { activePlan, type Plan, type PlanId } from '@/lib/plans';
+import type { Plan, PlanId, PlanStatus } from '@/lib/plans';
+import { effectivePlan } from '@/lib/services/plans';
 import { can, type Permission, type Role } from '@/lib/rbac';
 import { Organization } from '@/models/Organization';
 import { User } from '@/models/User';
@@ -20,7 +21,8 @@ export interface AuthContext {
     ai: { provider: 'claude' | 'gemini'; model: string };
     aiUsage: { month: string; count: number };
   };
-  plan: Plan; // effective plan (expired paid plans fall back to Starter; super-admin overrides applied)
+  plan: Plan; // effective plan right now (expired trial/subscription → fallback plan; admin limit overrides applied)
+  planStatus: PlanStatus; // trial / paid / expired details for the UI
   can: (p: Permission) => boolean;
   impersonatedBy: string | null; // platform admin id when this is a support session
 }
@@ -58,14 +60,14 @@ export const getAuth = cache(async (): Promise<AuthContext | null> => {
   // A suspended workspace locks out its members (support sessions from the platform console still work).
   if (org.suspended && !session.impersonator) return null;
   const role = user.role as Role;
-  const base = activePlan({ plan: org.plan as PlanId, planExpiresAt: org.planExpiresAt });
+  const { plan: base, status: planStatus } = await effectivePlan(org);
   const o = org.limitOverrides;
   return {
     user: { id: String(user._id), name: user.name, email: user.email, role },
     org: {
       id: String(org._id),
       name: org.name,
-      plan: org.plan as PlanId,
+      plan: (org.plan ?? '') as PlanId,
       planExpiresAt: org.planExpiresAt ?? null,
       ai: { provider: (org.ai?.provider as 'claude' | 'gemini') || 'gemini', model: org.ai?.model || '' },
       aiUsage: { month: org.aiUsage?.month || '', count: org.aiUsage?.count || 0 },
@@ -78,13 +80,23 @@ export const getAuth = cache(async (): Promise<AuthContext | null> => {
         aiCredits: applyOverride(base.limits.aiCredits, o?.aiCredits),
       },
     },
+    planStatus,
     can: (p) => can(role, p),
     impersonatedBy: session.impersonator,
   };
 });
 
-// For route handlers: throws 401/403 as HttpError (handled by `route()`).
+// For route handlers: throws 401/403 as HttpError (handled by `route()`). A locked workspace (trial ended,
+// no subscription) gets 402 here; support sessions from the platform console still get through.
 export async function requireAuth(...permissions: Permission[]) {
+  const auth = await requireAuthWhileLocked(...permissions);
+  if (auth.planStatus.locked && !auth.impersonatedBy) throw new HttpError(402, 'Your free trial has ended. Choose a plan in Billing to keep using your workspace.');
+  return auth;
+}
+
+// Same, but also works for a locked workspace. Only for routes needed to get unlocked (billing) or to manage
+// your own login (account).
+export async function requireAuthWhileLocked(...permissions: Permission[]) {
   const auth = await getAuth();
   if (!auth) throw new HttpError(401, 'Please sign in.');
   if (!permissions.every(auth.can)) throw forbidden();

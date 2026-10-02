@@ -4,9 +4,11 @@ import Link from 'next/link';
 import type { CSSProperties } from 'react';
 import Bubble from '@/components/marketing/Bubble';
 import { FeatureSlider, RoleTabs, StepsCarousel } from '@/components/marketing/LandingInteractive';
+import LegalLinks from '@/components/legal/LegalLinks';
 import Reveal from '@/components/marketing/Reveal';
 import { Logo, ScoreRing } from '@/components/ui';
-import { PLANS, PLAN_IDS, formatINR } from '@/lib/plans';
+import { formatINR, isFree, type Plan } from '@/lib/plans';
+import { getSettings, publicPlans } from '@/lib/services/plans';
 
 const PIPELINE = [
   { stage: 'New', bg: 'bg-white', company: 'Zen Foods', value: '₹1.2L', score: 41 },
@@ -55,14 +57,28 @@ function TeamRow({ reverse = false }: { reverse?: boolean }) {
   );
 }
 
-export default function Home() {
+// Pricing comes from the plans managed in the platform console; refreshed every minute.
+export const revalidate = 60;
+
+async function pricing(): Promise<{ plans: Plan[]; trialDays: number | null }> {
+  try {
+    const [plans, settings] = await Promise.all([publicPlans(), getSettings()]);
+    const trial = settings.trial.enabled ? plans.find((p) => p.id === settings.trial.planKey) : null;
+    return { plans, trialDays: trial ? settings.trial.days : null };
+  } catch {
+    return { plans: [], trialDays: null }; // e.g. no database during build — next revalidation fills it in
+  }
+}
+
+export default async function Home() {
+  const { plans, trialDays } = await pricing();
   return (
     <div className="mk min-h-screen overflow-x-clip bg-[#ebebe8]">
       {/* Framed nav + hero (the white "browser frame" from the reference) */}
       <div className="p-2 sm:p-4">
         <div className="relative overflow-hidden rounded-[28px] bg-white sm:rounded-[36px]">
           <header className="relative z-20 flex items-center justify-between gap-4 px-5 py-5 sm:px-10 sm:py-7">
-            <Link href="/" aria-label="LeadPilot home">
+            <Link href="/" aria-label="Smart CRM home">
               <Logo className="text-lg text-ink" />
             </Link>
             <nav className="hidden items-center rounded-full bg-chalk p-1 text-sm font-medium md:flex" aria-label="Main">
@@ -96,7 +112,7 @@ export default function Home() {
               Capture, score <span className="text-rouge">&amp; close every deal.</span>
             </h1>
             <p className="mx-auto mt-6 max-w-lg animate-fade-up text-base text-ink-soft sm:text-lg">
-              Talk, paste or snap. LeadPilot turns it into a lead, scores it, writes the follow-up and keeps your pipeline current.
+              Talk, paste or snap. Smart CRM turns it into a lead, scores it, writes the follow-up and keeps your pipeline current.
             </p>
             <div className="mt-8 flex animate-fade-up flex-wrap justify-center gap-2">
               <Link href="/signup" className="pill-dark px-6 py-3">
@@ -106,7 +122,7 @@ export default function Home() {
                 How it works
               </a>
             </div>
-            <p className="mt-4 text-xs text-ink-soft">Free on Starter · no card needed</p>
+            <p className="mt-4 text-xs text-ink-soft">{trialDays ? `${trialDays}-day free trial` : 'Free trial'} · no card needed</p>
 
             {/* Product screenshot, cut off by the bottom of the frame */}
             <div className="relative mx-auto mt-14 max-w-6xl sm:mt-16">
@@ -116,7 +132,7 @@ export default function Home() {
               <div className="-mb-px h-[clamp(230px,52vw,600px)] animate-rise overflow-hidden rounded-t-[20px] bg-chalk p-1.5 pb-0 sm:rounded-t-[28px] sm:p-3 sm:pb-0">
                 <Image
                   src="/marketing/dash.png"
-                  alt="LeadPilot dashboard with pipeline overview, AI Copilot, won deals and team activity"
+                  alt="Smart CRM dashboard with pipeline overview, AI Copilot, won deals and team activity"
                   width={2338}
                   height={1460}
                   sizes="(min-width: 1200px) 1152px, 100vw"
@@ -181,21 +197,20 @@ export default function Home() {
           <p className="mx-auto mt-4 max-w-md text-ink-soft">Upgrade with UPI, cards or netbanking via Razorpay.</p>
         </Reveal>
         <div className="mt-14 grid gap-5 md:grid-cols-3">
-          {PLAN_IDS.map((id, i) => {
-            const p = PLANS[id];
-            const featured = id === 'pro';
+          {plans.map((p, i) => {
+            const featured = p.popular;
             return (
-              <Reveal key={id} delay={i * 120} className="h-full">
+              <Reveal key={p.id} delay={i * 120} className="h-full">
                 <div className="flex h-full flex-col">
                   <span className={`w-fit rounded-t-2xl px-5 pb-2 pt-3 text-xs font-semibold ${featured ? 'bg-tang text-white' : 'bg-white text-ink-soft'}`}>
-                    {featured ? 'Most popular' : p.pricePaise ? 'Monthly' : 'Forever free'}
+                    {featured ? 'Most popular' : isFree(p) ? 'Forever free' : 'Monthly'}
                   </span>
                   <div className={`flex flex-1 flex-col rounded-[24px] rounded-tl-none p-7 ${featured ? 'bg-tang text-white' : 'bg-white'}`}>
                     <h3 className="font-display text-2xl font-semibold tracking-tight">{p.name}</h3>
                     <p className={`mt-1 text-sm ${featured ? 'text-white/80' : 'text-ink-soft'}`}>{p.tagline}</p>
                     <p className="display mt-6 text-5xl">
-                      {p.pricePaise ? formatINR(p.pricePaise) : 'Free'}
-                      {p.pricePaise > 0 && <span className={`ml-1 font-sans text-sm font-normal tracking-normal ${featured ? 'text-white/80' : 'text-ink-soft'}`}>/mo</span>}
+                      {isFree(p) ? 'Free' : formatINR(p.priceMonthly)}
+                      {!isFree(p) && <span className={`ml-1 font-sans text-sm font-normal tracking-normal ${featured ? 'text-white/80' : 'text-ink-soft'}`}>/mo</span>}
                     </p>
                     <ul className="my-7 flex-1 space-y-2.5 text-sm">
                       {p.features.map((f) => (
@@ -208,7 +223,7 @@ export default function Home() {
                       ))}
                     </ul>
                     <Link href="/signup" className={featured ? 'pill-light ring-0' : 'pill-dark'}>
-                      {p.pricePaise ? 'Start free, upgrade anytime' : 'Get started'}
+                      {isFree(p) ? 'Get started' : trialDays ? `Start ${trialDays}-day free trial` : 'Start free, upgrade anytime'}
                     </Link>
                   </div>
                 </div>
@@ -273,7 +288,8 @@ export default function Home() {
       <footer className="border-t border-black/10 py-8">
         <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4 px-5 text-sm text-ink-soft">
           <Logo className="text-ink" />
-          <p>© {new Date().getFullYear()} LeadPilot. Built with Next.js, Claude &amp; Gemini.</p>
+          <LegalLinks />
+          <p>© {new Date().getFullYear()} Smart CRM</p>
         </div>
       </footer>
     </div>

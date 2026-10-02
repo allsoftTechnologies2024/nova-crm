@@ -49,7 +49,7 @@ export default function AdminLoginForm() {
             <ShieldCheck className="size-5" />
           </span>
           <div className="leading-tight">
-            <p className="font-bold">LeadPilot</p>
+            <p className="font-bold">Smart CRM</p>
             <p className="text-xs text-white/50">Platform operations</p>
           </div>
         </div>
@@ -109,7 +109,7 @@ export default function AdminLoginForm() {
           <span className="grid size-9 place-items-center rounded-xl bg-[#151515] text-white">
             <ShieldCheck className="size-4" />
           </span>
-          <span className="text-sm font-bold">LeadPilot · Platform</span>
+          <span className="text-sm font-bold">Smart CRM · Platform</span>
         </div>
 
         <div className="mx-auto flex w-full max-w-sm flex-1 animate-fade-up flex-col justify-center py-12">

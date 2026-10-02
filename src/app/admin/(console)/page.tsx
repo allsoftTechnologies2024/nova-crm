@@ -2,7 +2,7 @@ import { Building2, IndianRupee, PauseCircle, Sparkles, Users, Zap } from 'lucid
 import Link from 'next/link';
 import { When } from '@/components/ui';
 import { compactInr } from '@/lib/client';
-import { PLANS, formatINR } from '@/lib/plans';
+import { formatINR } from '@/lib/plans';
 import { recentLogs } from '@/platform/services/audit';
 import { platformStats } from '@/platform/services/overview';
 import { listOrgs } from '@/platform/services/workspaces';
@@ -18,7 +18,8 @@ export default async function AdminOverview() {
     { label: 'Revenue', value: compactInr(stats.revenue / 100), hint: `${formatINR(stats.revenue30)} in 30 days`, icon: IndianRupee },
     { label: 'AI actions', value: stats.aiThisMonth.toLocaleString('en-IN'), hint: 'This month, all workspaces', icon: Sparkles },
   ];
-  const planTone = { free: 'bg-brand-3', pro: 'bg-brand', business: 'bg-brand-2' } as const;
+  const TONES = ['bg-brand-3', 'bg-brand', 'bg-brand-2', 'bg-success', 'bg-amber-400', 'bg-sky-400', 'bg-violet-400'];
+  const toneOf = (i: number) => TONES[i % TONES.length];
 
   return (
     <div className="space-y-6">
@@ -55,7 +56,8 @@ export default async function AdminOverview() {
                     <span className="block truncate text-xs text-muted">{o.owner}</span>
                   </span>
                   {o.suspended && <span className="chip bg-rose-50 text-rose-600 ring-rose-200">Suspended</span>}
-                  <span className="chip bg-brand/10 text-brand ring-brand/20">{PLANS[o.plan].name}</span>
+                  <span className="chip bg-brand/10 text-brand ring-brand/20">{o.planName}</span>
+                  {o.planSource === 'trial' && <span className="chip bg-brand-2/10 text-brand-2 ring-brand-2/20">Trial</span>}
                   <When value={o.createdAt} ago />
                 </Link>
               </li>
@@ -67,17 +69,22 @@ export default async function AdminOverview() {
           <section className="card p-6">
             <h2 className="mb-4 text-base font-bold">Active plans</h2>
             <div className="flex h-3 overflow-hidden rounded-full bg-surface-2">
-              {stats.plans.map((p) => p.count > 0 && <span key={p.plan} className={planTone[p.plan]} style={{ width: `${(p.count / totalPlans) * 100}%` }} />)}
+              {stats.plans.map((p, i) => p.count > 0 && <span key={p.plan} className={toneOf(i)} style={{ width: `${(p.count / totalPlans) * 100}%` }} />)}
             </div>
             <ul className="mt-4 space-y-2 text-sm">
-              {stats.plans.map((p) => (
+              {stats.plans.map((p, i) => (
                 <li key={p.plan} className="flex items-center gap-2">
-                  <span className={`size-2.5 rounded-full ${planTone[p.plan]}`} />
-                  <span className="text-muted">{PLANS[p.plan].name}</span>
+                  <span className={`size-2.5 rounded-full ${toneOf(i)}`} />
+                  <span className="text-muted">{p.name}</span>
                   <span className="ml-auto font-bold tabular-nums">{p.count}</span>
                 </li>
               ))}
               <li className="flex items-center gap-2 border-t border-line pt-2">
+                <span className="size-2.5 rounded-full bg-brand-2" />
+                <span className="text-muted">On free trial</span>
+                <span className="ml-auto font-bold tabular-nums">{stats.trials}</span>
+              </li>
+              <li className="flex items-center gap-2">
                 <PauseCircle className="size-3.5 text-rose-500" />
                 <span className="text-muted">Suspended</span>
                 <span className="ml-auto font-bold tabular-nums">{stats.suspended}</span>

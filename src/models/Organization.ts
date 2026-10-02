@@ -1,12 +1,13 @@
 import mongoose, { type InferSchemaType, type Model } from 'mongoose';
 import { defineModel } from '@/lib/db';
-import { PLAN_IDS } from '@/lib/plans';
 
 const OrganizationSchema = new mongoose.Schema(
   {
     name: { type: String, required: true, trim: true },
-    plan: { type: String, enum: PLAN_IDS, default: 'free' },
-    planExpiresAt: { type: Date, default: null },
+    plan: { type: String, default: 'free' }, // Plan.key (plans are managed from the platform console)
+    planExpiresAt: { type: Date, default: null }, // end of trial / paid period; null = no end
+    planSource: { type: String, enum: ['free', 'trial', 'paid', 'admin'], default: 'free' },
+    trialUsed: { type: Boolean, default: false }, // one free trial per workspace
     // Which AI this workspace uses; see lib/ai/models.ts.
     ai: {
       provider: { type: String, enum: ['claude', 'gemini'], default: 'gemini' },

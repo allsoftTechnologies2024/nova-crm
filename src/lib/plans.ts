@@ -1,59 +1,60 @@
-// Subscription plans. Prices are in INR paise for Razorpay; limits are enforced server-side.
+// Plan types + pure helpers (safe for client components). Plans themselves live in the database and are
+// managed from the platform console; server code loads them via lib/services/plans.ts.
 
-export const PLAN_IDS = ['free', 'pro', 'business'] as const;
-export type PlanId = (typeof PLAN_IDS)[number];
+export type PlanId = string; // the plan's key, e.g. "pro"
+
+export interface Limits {
+  seats: number; // Infinity = unlimited
+  leads: number;
+  aiCredits: number; // per month
+}
 
 export interface Plan {
   id: PlanId;
   name: string;
-  pricePaise: number; // per month
   tagline: string;
-  limits: { seats: number; leads: number; aiCredits: number }; // aiCredits per month; Infinity = unlimited
+  priceMonthly: number; // paise; 0 = free
+  priceYearly: number; // paise, total for 12 months
+  limits: Limits;
   features: string[];
+  active: boolean; // can be chosen for new sign-ups / purchases
+  public: boolean; // shown on the pricing page and in Billing
+  popular: boolean; // highlighted card
+  sortOrder: number;
 }
 
-export const PLANS: Record<PlanId, Plan> = {
-  free: {
-    id: 'free',
-    name: 'Starter',
-    pricePaise: 0,
-    tagline: 'For solo founders trying AI-first selling',
-    limits: { seats: 2, leads: 100, aiCredits: 50 },
-    features: ['2 team members', '100 leads', '50 AI actions / month', 'Kanban pipeline'],
-  },
-  pro: {
-    id: 'pro',
-    name: 'Pro',
-    pricePaise: 99900,
-    tagline: 'For growing sales teams',
-    limits: { seats: 10, leads: 5000, aiCredits: 1000 },
-    features: ['10 team members', '5,000 leads', '1,000 AI actions / month', 'AI Copilot with actions', 'Role-based access'],
-  },
-  business: {
-    id: 'business',
-    name: 'Business',
-    pricePaise: 249900,
-    tagline: 'For teams that run on AI',
-    limits: { seats: Infinity, leads: Infinity, aiCredits: 5000 },
-    features: ['Unlimited members', 'Unlimited leads', '5,000 AI actions / month', 'Priority support'],
-  },
-};
+// Fallback value meaning "no free plan": a workspace without a trial or subscription is locked until it pays.
+// Plan keys must start with a letter or digit, so this can never collide with a real plan.
+export const LOCK_PLAN_KEY = '__lock__';
 
-export const BILLING_PERIODS = { monthly: { months: 1, discount: 0 }, yearly: { months: 12, discount: 0.2 } } as const;
+// How the workspace got its current plan.
+export type PlanSource = 'free' | 'trial' | 'paid' | 'admin';
+
+export interface PlanStatus {
+  source: PlanSource;
+  assigned: { id: PlanId; name: string }; // what the workspace is set to
+  expiresAt: string | null; // trial / subscription end
+  expired: boolean; // past expiresAt → running on the fallback plan
+  locked: boolean; // no usable plan and no fallback: read-only until the workspace subscribes
+  onTrial: boolean;
+  daysLeft: number | null;
+}
+
+export const BILLING_PERIODS = { monthly: { months: 1, label: 'Monthly' }, yearly: { months: 12, label: 'Yearly' } } as const;
 export type BillingPeriod = keyof typeof BILLING_PERIODS;
 
-export function priceFor(plan: PlanId, period: BillingPeriod) {
-  const { months, discount } = BILLING_PERIODS[period];
-  return Math.round(PLANS[plan].pricePaise * months * (1 - discount));
+export const priceOf = (plan: Pick<Plan, 'priceMonthly' | 'priceYearly'>, period: BillingPeriod) => (period === 'yearly' ? plan.priceYearly : plan.priceMonthly);
+export const isFree = (plan: Pick<Plan, 'priceMonthly'>) => plan.priceMonthly <= 0;
+
+// Yearly discount shown on the toggle, e.g. 20 (%). 0 when yearly isn't cheaper.
+export function yearlySavingPct(plan: Pick<Plan, 'priceMonthly' | 'priceYearly'>) {
+  const full = plan.priceMonthly * 12;
+  return full > 0 && plan.priceYearly < full ? Math.round((1 - plan.priceYearly / full) * 100) : 0;
 }
 
 export const formatINR = (paise: number) => `₹${(paise / 100).toLocaleString('en-IN', { maximumFractionDigits: 0 })}`;
-
-// A paid plan that has run out falls back to Starter limits.
-export function activePlan(org: { plan: PlanId; planExpiresAt?: Date | string | null }): Plan {
-  if (org.plan === 'free') return PLANS.free;
-  if (!org.planExpiresAt || new Date(org.planExpiresAt) < new Date()) return PLANS.free;
-  return PLANS[org.plan];
-}
-
 export const limitLabel = (n: number) => (Number.isFinite(n) ? n.toLocaleString('en-IN') : 'Unlimited');
+
+// Stored limits use -1 for "unlimited"; at runtime that's Infinity.
+export const fromStoredLimit = (n: number | null | undefined) => (n == null || n < 0 ? Infinity : n);
+export const toStoredLimit = (n: number) => (Number.isFinite(n) ? n : -1);

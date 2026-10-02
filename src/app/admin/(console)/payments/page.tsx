@@ -1,12 +1,14 @@
 import Link from 'next/link';
 import { When } from '@/components/ui';
-import { formatINR, PLANS, type PlanId } from '@/lib/plans';
+import { formatINR } from '@/lib/plans';
+import { allPlans } from '@/lib/services/plans';
 import { listPayments } from '@/platform/services/payments';
 
 export const metadata = { title: 'Payments' };
 
 export default async function PaymentsPage() {
-  const payments = await listPayments();
+  const [payments, plans] = await Promise.all([listPayments(), allPlans()]);
+  const names = new Map(plans.map((p) => [p.id, p.name]));
   const paid = payments.filter((p) => p.status === 'paid');
   return (
     <div className="space-y-5">
@@ -33,7 +35,7 @@ export default async function PaymentsPage() {
                   </Link>
                 </td>
                 <td className="px-5 py-3">
-                  {PLANS[p.plan as PlanId]?.name ?? p.plan} <span className="text-muted">· {p.period}</span>
+                  {names.get(p.plan) ?? p.plan} <span className="text-muted">· {p.period}</span>
                 </td>
                 <td className="px-5 py-3 font-semibold tabular-nums">{formatINR(p.amount)}</td>
                 <td className="px-5 py-3">

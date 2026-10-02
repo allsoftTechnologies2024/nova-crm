@@ -1,10 +1,17 @@
 import Link from 'next/link';
 import { SignupForm } from '@/components/app/AuthForms';
 import AuthShell from '@/components/marketing/AuthShell';
+import { getPlan, getSettings } from '@/lib/services/plans';
 
 export const metadata = { title: 'Create your workspace' };
 
-export default function SignupPage() {
+// Trial length for the "N-day free trial" note under the form (null if the trial is off or its plan is disabled).
+async function trialDays() {
+  const { trial } = await getSettings();
+  return trial.enabled && (await getPlan(trial.planKey))?.active ? trial.days : null;
+}
+
+export default async function SignupPage() {
   return (
     <AuthShell
       title="Start selling with AI"
@@ -18,7 +25,7 @@ export default function SignupPage() {
         </>
       }
     >
-      <SignupForm />
+      <SignupForm trialDays={await trialDays()} />
     </AuthShell>
   );
 }

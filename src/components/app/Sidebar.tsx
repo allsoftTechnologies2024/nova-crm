@@ -75,11 +75,11 @@ export default function Sidebar({ nav, orgName, defaultOpen, user, quickAdd }: P
           <ChevronLeft className={`size-4 transition-transform duration-300 ${open ? '' : 'rotate-180'}`} strokeWidth={2.6} />
         </button>
 
-        <Link href="/app" className={`flex items-center gap-3 ${open ? 'px-1' : ''}`} aria-label="LeadPilot home">
-          <span className="grid size-11 shrink-0 place-items-center rounded-2xl bg-white/15 text-lg font-bold text-white ring-1 ring-white/25">L</span>
+        <Link href="/app" className={`flex items-center gap-3 ${open ? 'px-1' : ''}`} aria-label="Smart CRM home">
+          <span className="grid size-11 shrink-0 place-items-center rounded-2xl bg-white/15 text-lg font-bold text-white ring-1 ring-white/25">S</span>
           {open && (
             <span className="min-w-0 animate-fade-up text-white">
-              <span className="block text-base font-bold leading-tight">LeadPilot</span>
+              <span className="block text-base font-bold leading-tight">Smart CRM</span>
               <span className="block truncate text-xs text-white/65">{orgName}</span>
             </span>
           )}

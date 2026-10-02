@@ -11,7 +11,7 @@ export default function LoginPage() {
       subtitle="Sign in to pick up where your pipeline left off."
       footer={
         <>
-          New to LeadPilot?{' '}
+          New to Smart CRM?{' '}
           <Link href="/signup" className="font-semibold text-brand hover:underline">
             Create a free workspace
           </Link>

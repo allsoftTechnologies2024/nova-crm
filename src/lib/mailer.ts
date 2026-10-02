@@ -18,6 +18,6 @@ export async function sendMail(msg: { to: string; subject: string; text: string;
     console.info(`\n[mail not configured] To: ${msg.to}\nSubject: ${msg.subject}\n${msg.text}\n`);
     return false;
   }
-  await transporter().sendMail({ from: process.env.MAIL_FROM || `LeadPilot <${process.env.SMTP_USER}>`, ...msg });
+  await transporter().sendMail({ from: process.env.MAIL_FROM || `Smart CRM <${process.env.SMTP_USER}>`, ...msg });
   return true;
 }

@@ -1,7 +1,6 @@
 import { ChevronRight, Search } from 'lucide-react';
 import Link from 'next/link';
 import { When } from '@/components/ui';
-import { PLANS } from '@/lib/plans';
 import { listOrgs } from '@/platform/services/workspaces';
 
 export const metadata = { title: 'Workspaces' };
@@ -39,8 +38,9 @@ export default async function WorkspacesPage({ searchParams }: PageProps<'/admin
                   <p className="text-xs text-muted">{o.owner}</p>
                 </td>
                 <td className="px-5 py-3.5">
-                  <span className="chip bg-brand/10 text-brand ring-brand/20">{PLANS[o.plan].name}</span>
-                  {o.planExpiresAt && o.plan !== 'free' && (
+                  <span className="chip bg-brand/10 text-brand ring-brand/20">{o.planName}</span>
+                  {o.planSource === 'trial' && <span className="chip ml-1 bg-brand-2/10 text-brand-2 ring-brand-2/20">Trial</span>}
+                  {o.planExpiresAt && (
                     <p className="mt-1 text-xs text-muted">until {new Date(o.planExpiresAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</p>
                   )}
                 </td>

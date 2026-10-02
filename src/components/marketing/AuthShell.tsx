@@ -1,6 +1,7 @@
 import { Bot, Mail, Mic, Sparkles } from 'lucide-react';
 import Link from 'next/link';
 import type { ReactNode } from 'react';
+import LegalLinks from '@/components/legal/LegalLinks';
 import { Logo } from '@/components/ui';
 
 const ACTIVITY = [
@@ -24,7 +25,10 @@ export default function AuthShell({ title, subtitle, children, footer }: { title
           {children}
           {footer && <div className="mt-8 text-center text-sm text-ink-soft">{footer}</div>}
         </div>
-        <p className="text-xs text-ink-soft">© {new Date().getFullYear()} LeadPilot · Secure sign-in</p>
+        <div className="space-y-2 text-xs text-ink-soft">
+          <LegalLinks />
+          <p>© {new Date().getFullYear()} Smart CRM · Secure sign-in</p>
+        </div>
       </div>
 
       <div className="m-3 hidden flex-col justify-between gap-10 rounded-[32px] bg-ink p-12 text-white lg:flex xl:p-14">

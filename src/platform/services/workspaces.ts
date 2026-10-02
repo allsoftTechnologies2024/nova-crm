@@ -4,7 +4,8 @@ import { z } from 'zod';
 import { PROVIDERS } from '@/lib/ai/models';
 import { connectDB } from '@/lib/db';
 import { badRequest, notFound } from '@/lib/http';
-import { PLAN_IDS, type PlanId } from '@/lib/plans';
+import type { PlanId, PlanSource } from '@/lib/plans';
+import { allPlans, getPlan, getSettings } from '@/lib/services/plans';
 import type { Role } from '@/lib/rbac';
 import { logActivity, systemActor } from '@/lib/services/activity';
 import { Conversation } from '@/models/Conversation';
@@ -24,6 +25,8 @@ export interface OrgRow {
   id: string;
   name: string;
   plan: PlanId;
+  planName: string;
+  planSource: PlanSource;
   planExpiresAt: string | null;
   suspended: boolean;
   owner: string;
@@ -48,11 +51,14 @@ export async function listOrgs(q = ''): Promise<OrgRow[]> {
     Lead.aggregate<{ _id: mongoose.Types.ObjectId; n: number }>([{ $match: { orgId: { $in: ids } } }, { $group: { _id: '$orgId', n: { $sum: 1 } } }]),
     User.find({ orgId: { $in: ids }, role: 'owner' }, { orgId: 1, email: 1 }).lean(),
   ]);
+  const names = new Map((await allPlans()).map((p) => [p.id, p.name]));
   const count = (rows: { _id: mongoose.Types.ObjectId; n: number }[], id: mongoose.Types.ObjectId) => rows.find((r) => String(r._id) === String(id))?.n ?? 0;
   return orgs.map((o) => ({
     id: String(o._id),
     name: o.name,
     plan: o.plan as PlanId,
+    planName: names.get(o.plan) ?? o.plan,
+    planSource: (o.planSource as PlanSource) || 'free',
     planExpiresAt: iso(o.planExpiresAt),
     suspended: Boolean(o.suspended),
     owner: owners.find((u) => String(u.orgId) === String(o._id))?.email ?? '—',
@@ -76,6 +82,8 @@ export async function getOrgDetail(id: string) {
     id: String(org._id),
     name: org.name,
     plan: org.plan as PlanId,
+    planSource: (org.planSource as PlanSource) || 'free',
+    trialUsed: Boolean(org.trialUsed),
     planExpiresAt: iso(org.planExpiresAt),
     suspended: Boolean(org.suspended),
     limitOverrides: { seats: org.limitOverrides?.seats ?? null, leads: org.limitOverrides?.leads ?? null, aiCredits: org.limitOverrides?.aiCredits ?? null },
@@ -91,11 +99,12 @@ export async function getOrgDetail(id: string) {
 const limit = z.number().int().min(-1).max(1_000_000).nullable();
 export const orgUpdateSchema = z.object({
   name: z.string().trim().min(1).max(120).optional(),
-  plan: z.enum(PLAN_IDS).optional(),
+  plan: z.string().trim().min(1).max(60).optional(),
   planExpiresAt: z.string().nullable().optional(), // ISO date; null = no expiry date
   limitOverrides: z.object({ seats: limit, leads: limit, aiCredits: limit }).optional(),
   suspended: z.boolean().optional(),
   resetAiUsage: z.literal(true).optional(),
+  startTrial: z.literal(true).optional(), // (re)start the configured free trial
   ai: z.object({ provider: z.enum(['claude', 'gemini']), model: z.string() }).optional(),
 });
 
@@ -111,10 +120,26 @@ export async function updateOrg(actor: AdminContext, id: string, input: z.infer<
   if (input.plan !== undefined || input.planExpiresAt !== undefined) {
     const expires = input.planExpiresAt ? new Date(input.planExpiresAt) : null;
     if (expires && Number.isNaN(expires.getTime())) throw badRequest('Invalid expiry date.');
-    if (input.plan !== undefined) org.plan = input.plan;
+    if (input.plan !== undefined) {
+      const plan = await getPlan(input.plan);
+      if (!plan) throw badRequest('Unknown plan.');
+      org.plan = plan.id;
+    }
     if (input.planExpiresAt !== undefined) org.planExpiresAt = expires;
-    if (org.plan !== 'free' && !org.planExpiresAt) throw badRequest('A paid plan needs an expiry date.');
-    changes.push(`plan → ${org.plan}${org.planExpiresAt ? ` until ${org.planExpiresAt.toISOString().slice(0, 10)}` : ''}`);
+    const target = await getPlan(org.plan);
+    if (target && target.priceMonthly > 0 && !org.planExpiresAt) throw badRequest('A paid plan needs an expiry date.');
+    org.planSource = 'admin';
+    changes.push(`plan → ${target?.name ?? org.plan}${org.planExpiresAt ? ` until ${org.planExpiresAt.toISOString().slice(0, 10)}` : ''}`);
+  }
+  if (input.startTrial) {
+    const { trial } = await getSettings();
+    const plan = await getPlan(trial.planKey);
+    if (!plan) throw badRequest('The trial plan is not set up. Configure it under Plans.');
+    org.plan = plan.id;
+    org.planExpiresAt = new Date(Date.now() + trial.days * 86_400_000);
+    org.planSource = 'trial';
+    org.trialUsed = true;
+    changes.push(`started a ${trial.days}-day ${plan.name} trial`);
   }
   if (input.limitOverrides) {
     org.limitOverrides = input.limitOverrides;

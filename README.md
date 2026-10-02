@@ -1,4 +1,4 @@
-# LeadPilot — AI-first SaaS CRM
+# Smart CRM — AI-first SaaS CRM
 
 Next.js 16 (App Router) · TypeScript · Tailwind CSS v4 · MongoDB · Claude + Gemini · Razorpay.
 

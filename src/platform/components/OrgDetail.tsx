@@ -8,7 +8,7 @@ import { ErrorText, Modal } from '@/components/ui';
 import Select from '@/components/ui/Select';
 import { PROVIDERS, type ProviderId } from '@/lib/ai/models';
 import { api, errorText, inr, toLocalInput } from '@/lib/client';
-import { PLANS, PLAN_IDS, limitLabel, type PlanId } from '@/lib/plans';
+import { formatINR, isFree, limitLabel, type Plan, type PlanId, type PlanSource } from '@/lib/plans';
 import { RoleSelect, UserButtons, type AdminUser } from './UserActions';
 
 interface Props {
@@ -16,6 +16,8 @@ interface Props {
     id: string;
     name: string;
     plan: PlanId;
+    planSource: PlanSource;
+    trialUsed: boolean;
     planExpiresAt: string | null;
     suspended: boolean;
     limitOverrides: { seats: number | null; leads: number | null; aiCredits: number | null };
@@ -27,6 +29,8 @@ interface Props {
     payments: { id: string; plan: string; period: string; amount: number; status: string; at: string }[];
   };
   models: { provider: ProviderId; model: string; label: string; available: boolean }[];
+  plans: Plan[];
+  trial: { enabled: boolean; planKey: string; days: number };
 }
 
 type LimitKey = 'seats' | 'leads' | 'aiCredits';
@@ -54,7 +58,10 @@ function Card({ icon, title, description, children, tone }: { icon: ReactNode; t
   );
 }
 
-export default function OrgDetail({ org, models }: Props) {
+const SOURCE_LABEL: Record<PlanSource, string> = { free: 'Free plan', trial: 'Free trial', paid: 'Paid subscription', admin: 'Granted by platform admin' };
+
+export default function OrgDetail({ org, models, plans, trial }: Props) {
+  const planById = (id: string) => plans.find((p) => p.id === id);
   const router = useRouter();
   const [error, setError] = useState('');
   const [saved, setSaved] = useState('');
@@ -95,12 +102,14 @@ export default function OrgDetail({ org, models }: Props) {
       })
     );
     patch(
-      { plan, planExpiresAt: plan === 'free' ? null : expires ? new Date(`${expires}T23:59:59`).toISOString() : null, limitOverrides: overrides },
+      { plan, planExpiresAt: expires ? new Date(`${expires}T23:59:59`).toISOString() : null, limitOverrides: overrides },
       'Plan & limits saved.'
     );
   }
 
-  const base = PLANS[plan].limits;
+  const selected = planById(plan);
+  const base = selected?.limits ?? { seats: Infinity, leads: Infinity, aiCredits: Infinity };
+  const needsExpiry = Boolean(selected && !isFree(selected));
   const addDays = (n: number) => {
     const d = new Date();
     d.setDate(d.getDate() + n);
@@ -118,7 +127,7 @@ export default function OrgDetail({ org, models }: Props) {
         <div className="mr-auto min-w-0">
           <h1 className="truncate text-2xl font-bold">{org.name}</h1>
           <p className="text-sm text-white/75">
-            {PLANS[org.plan].name} plan · {org.members.length} members · {org.leads.toLocaleString('en-IN')} leads · {org.aiUsed} AI actions this month
+            {planById(org.plan)?.name ?? org.plan} plan ({SOURCE_LABEL[org.planSource] ?? org.planSource}) · {org.members.length} members · {org.leads.toLocaleString('en-IN')} leads · {org.aiUsed} AI actions this month
           </p>
         </div>
         {org.suspended ? (
@@ -132,18 +141,27 @@ export default function OrgDetail({ org, models }: Props) {
       {saved && <p className="rounded-2xl bg-success/10 px-3.5 py-2.5 text-sm font-medium text-success">{saved}</p>}
 
       <div className="grid gap-6 xl:grid-cols-2">
-        <Card icon={<CalendarClock className="size-5" />} title="Plan override" description="Grant or change a plan without payment (e.g. trials, partners).">
+        <Card
+          icon={<CalendarClock className="size-5" />}
+          title="Plan"
+          description={`${SOURCE_LABEL[org.planSource] ?? org.planSource}${org.planExpiresAt ? ` · ends ${new Date(org.planExpiresAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}` : ''}. Change it here without payment (partners, extensions).`}
+        >
           <div className="grid gap-4 sm:grid-cols-2">
             <label className="block">
               <span className="label">Plan</span>
-              <Select aria-label="Plan" value={plan} onChange={setPlan} options={PLAN_IDS.map((p) => ({ value: p, label: PLANS[p].name, hint: PLANS[p].tagline }))} />
+              <Select
+                aria-label="Plan"
+                value={plan}
+                onChange={setPlan}
+                options={plans.map((p) => ({ value: p.id, label: `${p.name}${p.active ? '' : ' (disabled)'}`, hint: isFree(p) ? 'Free' : `${formatINR(p.priceMonthly)}/mo` }))}
+              />
             </label>
             <label className="block">
               <span className="label">Expires on</span>
-              <input type="date" className="input" value={expires} onChange={(e) => setExpires(e.target.value)} disabled={plan === 'free'} />
+              <input type="date" className="input" value={expires} onChange={(e) => setExpires(e.target.value)} />
             </label>
           </div>
-          {plan !== 'free' && (
+          {needsExpiry && (
             <div className="mt-3 flex flex-wrap gap-2">
               {[
                 ['+14 days', 14],
@@ -191,8 +209,20 @@ export default function OrgDetail({ org, models }: Props) {
           </div>
         </Card>
       </div>
-      <div className="flex justify-end">
-        <button className="btn-primary" disabled={busy || (plan !== 'free' && !expires)} onClick={savePlan}>
+      <div className="flex flex-wrap justify-end gap-2">
+        {trial.enabled && planById(trial.planKey) && (
+          <button
+            className="btn-ghost"
+            disabled={busy}
+            onClick={() =>
+              confirm(`Start a ${trial.days}-day ${planById(trial.planKey)?.name} trial for ${org.name}?${org.trialUsed ? ' (This workspace already had a trial.)' : ''}`) &&
+              patch({ startTrial: true }, 'Trial started.')
+            }
+          >
+            Start {trial.days}-day trial
+          </button>
+        )}
+        <button className="btn-primary" disabled={busy || (needsExpiry && !expires)} onClick={savePlan}>
           {busy ? 'Saving…' : 'Save plan & limits'}
         </button>
       </div>
@@ -275,7 +305,7 @@ export default function OrgDetail({ org, models }: Props) {
             {org.payments.map((p) => (
               <li key={p.id} className="flex items-center justify-between py-2.5">
                 <span>
-                  {PLANS[p.plan as PlanId]?.name ?? p.plan} · <span className="text-muted">{p.period}</span>
+                  {planById(p.plan)?.name ?? p.plan} · <span className="text-muted">{p.period}</span>
                 </span>
                 <span className="flex items-center gap-3">
                   <span className={`chip ${p.status === 'paid' ? 'bg-success/10 text-success ring-success/20' : 'bg-surface-2 text-muted ring-line'}`}>{p.status}</span>

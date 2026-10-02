@@ -6,7 +6,7 @@ import Script from 'next/script';
 import { useState } from 'react';
 import { ErrorText, Meter, PageHeader } from '@/components/ui';
 import { api, errorText } from '@/lib/client';
-import { PLANS, PLAN_IDS, formatINR, priceFor, type BillingPeriod, type PlanId } from '@/lib/plans';
+import { formatINR, isFree, priceOf, yearlySavingPct, type BillingPeriod, type Plan, type PlanId, type PlanStatus } from '@/lib/plans';
 
 interface RazorpayOptions {
   key: string;
@@ -28,20 +28,24 @@ declare global {
 
 type Usage = { used: number; limit: number | null };
 interface Props {
-  current: { plan: PlanId; name: string; expiresAt: string | null; expired: boolean };
+  plans: Plan[]; // enabled + visible plans from the platform console
+  current: { plan: PlanId; name: string; status: PlanStatus };
   usage: { seats: Usage; leads: Usage; ai: Usage };
   payments: { id: string; plan: string; period: string; amount: number; paidAt: string }[];
   configured: boolean;
 }
 
-export default function BillingView({ current, usage, payments, configured }: Props) {
+export default function BillingView({ plans, current, usage, payments, configured }: Props) {
   const router = useRouter();
   const [period, setPeriod] = useState<BillingPeriod>('monthly');
   const [busy, setBusy] = useState<PlanId | ''>('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
-  async function checkout(plan: 'pro' | 'business') {
+  const nameOf = (id: string) => plans.find((p) => p.id === id)?.name ?? id;
+  const bestSaving = Math.max(0, ...plans.map(yearlySavingPct));
+
+  async function checkout(plan: PlanId) {
     setBusy(plan);
     setError('');
     setSuccess('');
@@ -56,14 +60,14 @@ export default function BillingView({ current, usage, payments, configured }: Pr
         order_id: order.orderId,
         amount: order.amount,
         currency: order.currency,
-        name: 'LeadPilot',
+        name: 'Smart CRM',
         description: order.description,
         prefill: order.prefill,
         theme: { color: '#151515' },
         handler: async (res) => {
           try {
             await api('/api/billing/verify', { body: res });
-            setSuccess(`You're on ${PLANS[plan].name}! 🎉`);
+            setSuccess(`You're on ${nameOf(plan)}! 🎉`);
             router.refresh();
           } catch (err) {
             setError(errorText(err));
@@ -90,13 +94,23 @@ export default function BillingView({ current, usage, payments, configured }: Pr
       <PageHeader
         title="Billing"
         subtitle={
-          current.expired
-            ? 'Your paid plan has ended — you are on Starter limits. Renew to restore them.'
-            : current.expiresAt
-              ? `${current.name} plan · renews/ends ${new Date(current.expiresAt).toLocaleDateString([], { day: 'numeric', month: 'short', year: 'numeric' })}`
+          current.status.locked
+            ? `Your ${current.status.source === 'trial' ? 'free trial' : `${current.status.assigned.name} plan`} has ended. Choose a plan to unlock your workspace.`
+            : current.status.expired
+            ? `Your ${current.status.onTrial || current.status.source === 'trial' ? 'free trial' : `${current.status.assigned.name} plan`} has ended — you're on ${current.name} limits now.`
+            : current.status.expiresAt
+              ? `${current.name} plan · ${current.status.onTrial ? 'trial ends' : 'renews/ends'} ${new Date(current.status.expiresAt).toLocaleDateString([], { day: 'numeric', month: 'short', year: 'numeric' })}`
               : `${current.name} plan`
         }
       />
+      {current.status.onTrial && (
+        <div className="flex flex-wrap items-center gap-3 rounded-2xl bg-brand-2/10 px-4 py-3 text-sm">
+          <span className="rounded-full bg-brand-2 px-2.5 py-0.5 text-xs font-bold text-white">Free trial</span>
+          <span>
+            You&apos;re trying <b>{current.name}</b> free — <b>{current.status.daysLeft} day{current.status.daysLeft === 1 ? '' : 's'} left</b>. Pick a plan below to keep these features when it ends.
+          </span>
+        </div>
+      )}
       {success && <p className="rounded-xl border border-emerald-500/20 bg-emerald-500/10 px-4 py-2.5 text-sm text-emerald-700">{success}</p>}
       <ErrorText>{error}</ErrorText>
       {!configured && <ErrorText>Razorpay keys are not set (RAZORPAY_KEY_ID / RAZORPAY_KEY_SECRET), so upgrades are disabled.</ErrorText>}
@@ -111,24 +125,24 @@ export default function BillingView({ current, usage, payments, configured }: Pr
         <div className="segmented w-full max-w-xs">
           {(['monthly', 'yearly'] as const).map((p) => (
             <button key={p} onClick={() => setPeriod(p)} aria-pressed={period === p} className="capitalize">
-              {p} {p === 'yearly' && <span className={period === p ? 'text-white/80' : 'text-emerald-600'}>−20%</span>}
+              {p} {p === 'yearly' && bestSaving > 0 && <span className={period === p ? 'text-white/80' : 'text-emerald-600'}>−{bestSaving}%</span>}
             </button>
           ))}
         </div>
       </div>
 
       <div className="no-scrollbar -mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-2 pt-3 sm:-mx-6 sm:px-6 md:mx-0 md:grid md:grid-cols-3 md:gap-4 md:overflow-visible md:px-0 md:pb-0">
-        {PLAN_IDS.map((id) => {
-          const plan = PLANS[id];
-          const isCurrent = current.plan === id;
-          const featured = id === 'pro';
+        {plans.map((plan) => {
+          const id = plan.id;
+          const isCurrent = current.plan === id && !current.status.expired;
+          const featured = plan.popular;
           return (
             <div key={id} className={`relative flex w-[82%] shrink-0 snap-center flex-col rounded-3xl p-5 md:w-auto md:rounded-2xl ${featured ? 'ai-border shadow-xl shadow-brand/10' : 'card'}`}>
               {featured && <span className="absolute -top-2.5 left-5 rounded-full bg-gradient-to-r from-brand to-brand-2 px-2 py-0.5 text-[11px] font-medium text-white">Most popular</span>}
               <h3 className="font-semibold">{plan.name}</h3>
               <p className="mt-1 text-xs text-muted">{plan.tagline}</p>
               <p className="mt-4 text-3xl font-semibold tracking-tight">
-                {plan.pricePaise ? formatINR(priceFor(id, period)) : '₹0'}
+                {isFree(plan) ? '₹0' : formatINR(priceOf(plan, period))}
                 <span className="text-sm font-normal text-muted">/{period === 'monthly' ? 'mo' : 'yr'}</span>
               </p>
               <ul className="my-5 flex-1 space-y-2 text-sm">
@@ -138,13 +152,19 @@ export default function BillingView({ current, usage, payments, configured }: Pr
                   </li>
                 ))}
               </ul>
-              {id === 'free' ? (
+              {isFree(plan) ? (
                 <button className="btn-ghost" disabled>
                   {isCurrent ? 'Current plan' : 'Included'}
                 </button>
               ) : (
                 <button className={featured ? 'btn-primary' : 'btn-ghost'} disabled={!configured || Boolean(busy)} onClick={() => checkout(id)}>
-                  {busy === id ? 'Opening…' : isCurrent ? 'Extend plan' : `Upgrade to ${plan.name}`}
+                  {busy === id
+                    ? 'Opening…'
+                    : isCurrent && current.status.onTrial
+                      ? `Subscribe to ${plan.name}`
+                      : isCurrent
+                        ? 'Extend plan'
+                        : `Upgrade to ${plan.name}`}
                 </button>
               )}
             </div>
@@ -162,7 +182,7 @@ export default function BillingView({ current, usage, payments, configured }: Pr
             {payments.map((p) => (
               <li key={p.id} className="flex flex-wrap justify-between gap-x-3 gap-y-0.5 py-2.5 sm:py-2">
                 <span>
-                  {PLANS[p.plan as PlanId]?.name ?? p.plan} · <span className="text-muted">{p.period}</span>
+                  {nameOf(p.plan)} · <span className="text-muted">{p.period}</span>
                 </span>
                 <span className="tabular-nums text-muted">
                   {formatINR(p.amount)} · {new Date(p.paidAt).toLocaleDateString()}

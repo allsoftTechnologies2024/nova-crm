@@ -57,7 +57,7 @@ export async function requestPasswordReset(email: string, appUrl: string) {
   const link = `${appUrl}/reset-password?token=${token}`;
   await sendMail({
     to: user.email,
-    subject: 'Reset your LeadPilot password',
+    subject: 'Reset your Smart CRM password',
     text: `Hi ${user.name},\n\nReset your password using this link (valid for ${RESET_TTL_MIN} minutes):\n${link}\n\nIf you didn't ask for this, you can ignore this email.`,
     html: `<div style="font-family:system-ui,sans-serif;max-width:480px;margin:auto;padding:24px;color:#151515">
   <h2 style="margin:0 0 12px">Reset your password</h2>

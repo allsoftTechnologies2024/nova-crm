@@ -4,12 +4,13 @@ import { z } from 'zod';
 import type { AuthContext } from '@/lib/auth/session';
 import { connectDB } from '@/lib/db';
 import { badRequest, HttpError } from '@/lib/http';
-import { BILLING_PERIODS, PLANS, priceFor } from '@/lib/plans';
+import { BILLING_PERIODS, isFree, priceOf } from '@/lib/plans';
+import { getPlan } from './plans';
 import { Organization } from '@/models/Organization';
 import { Payment } from '@/models/Payment';
 import { logActivity, systemActor } from './activity';
 
-export const checkoutSchema = z.object({ plan: z.enum(['pro', 'business']), period: z.enum(['monthly', 'yearly']) });
+export const checkoutSchema = z.object({ plan: z.string().trim().min(1).max(60), period: z.enum(['monthly', 'yearly']) });
 export const verifySchema = z.object({
   razorpay_order_id: z.string().min(1),
   razorpay_payment_id: z.string().min(1),
@@ -24,7 +25,11 @@ const hmac = (secret: string, payload: string) => crypto.createHmac('sha256', se
 // Creates a Razorpay order (REST API — no SDK needed) and records it.
 export async function createOrder(auth: AuthContext, input: z.infer<typeof checkoutSchema>) {
   if (!razorpayConfigured()) throw new HttpError(503, 'Payments are not configured. Set RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET.');
-  const amount = priceFor(input.plan, input.period);
+  // Only plans the platform currently sells: enabled, visible and paid.
+  const plan = await getPlan(input.plan);
+  if (!plan || !plan.active || !plan.public || isFree(plan)) throw badRequest('That plan is not available.');
+  const amount = priceOf(plan, input.period);
+  if (amount <= 0) throw badRequest('That billing period is not available for this plan.');
   const basic = Buffer.from(`${process.env.RAZORPAY_KEY_ID}:${process.env.RAZORPAY_KEY_SECRET}`).toString('base64');
   const res = await fetch('https://api.razorpay.com/v1/orders', {
     method: 'POST',
@@ -45,7 +50,7 @@ export async function createOrder(auth: AuthContext, input: z.infer<typeof check
     orderId: order.id,
     amount,
     currency: 'INR',
-    description: `${PLANS[input.plan].name} plan · ${input.period}`,
+    description: `${plan.name} plan · ${input.period}`,
     prefill: { name: auth.user.name, email: auth.user.email },
     orgName: auth.org.name,
   };
@@ -69,11 +74,12 @@ async function activate(orderId: string, paymentId: string) {
   expires.setMonth(expires.getMonth() + BILLING_PERIODS[payment.period as keyof typeof BILLING_PERIODS].months);
   org.plan = payment.plan;
   org.planExpiresAt = expires;
+  org.planSource = 'paid';
   await org.save();
   await logActivity(systemActor(String(org._id)), {
     action: 'billing.paid',
     category: 'billing',
-    summary: `Payment received: ${PLANS[payment.plan as keyof typeof PLANS].name} plan (${payment.period}) · ₹${(payment.amount / 100).toLocaleString('en-IN')} — active until ${expires.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}`,
+    summary: `Payment received: ${(await getPlan(payment.plan))?.name ?? payment.plan} plan (${payment.period}) · ₹${(payment.amount / 100).toLocaleString('en-IN')} — active until ${expires.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}`,
     entity: { type: 'payment', id: payment.orderId, label: payment.orderId },
     meta: { amount: payment.amount },
   });

@@ -4,6 +4,7 @@ import { startSession } from '@/lib/auth/session';
 import { connectDB } from '@/lib/db';
 import { badRequest, parseBody, route } from '@/lib/http';
 import { logActivity } from '@/lib/services/activity';
+import { initialPlanFor } from '@/lib/services/plans';
 import { Organization } from '@/models/Organization';
 import { User } from '@/models/User';
 
@@ -21,6 +22,7 @@ export const POST = route(async (req) => {
   if (await User.exists({ email: input.email.toLowerCase() })) throw badRequest('That email is already registered. Sign in instead.');
   const org = await Organization.create({
     name: input.company,
+    ...(await initialPlanFor()), // free trial if enabled in the platform console, else the fallback plan
     ai: { provider: process.env.ANTHROPIC_API_KEY ? 'claude' : 'gemini', model: '' },
   });
   try {

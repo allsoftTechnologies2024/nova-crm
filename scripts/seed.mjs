@@ -13,14 +13,14 @@ await mongoose.connect(process.env.MONGODB_URI);
 const db = mongoose.connection.db;
 
 const PASSWORD = 'demo12345';
-const OWNER_EMAIL = 'demo@leadpilot.test';
+const OWNER_EMAIL = 'demo@smartcrm.test';
 const USERS = [
   { name: 'Demo Owner', email: OWNER_EMAIL, role: 'owner' },
-  { name: 'Anita Admin', email: 'admin@leadpilot.test', role: 'admin' },
-  { name: 'Manoj Manager', email: 'manager@leadpilot.test', role: 'manager' },
-  { name: 'Asha Agent', email: 'agent@leadpilot.test', role: 'agent' },
-  { name: 'Ravi Agent', email: 'agent2@leadpilot.test', role: 'agent' },
-  { name: 'Vik Viewer', email: 'viewer@leadpilot.test', role: 'viewer' },
+  { name: 'Anita Admin', email: 'admin@smartcrm.test', role: 'admin' },
+  { name: 'Manoj Manager', email: 'manager@smartcrm.test', role: 'manager' },
+  { name: 'Asha Agent', email: 'agent@smartcrm.test', role: 'agent' },
+  { name: 'Ravi Agent', email: 'agent2@smartcrm.test', role: 'agent' },
+  { name: 'Vik Viewer', email: 'viewer@smartcrm.test', role: 'viewer' },
 ];
 
 // Reset the previous demo workspace (found via the demo owner).

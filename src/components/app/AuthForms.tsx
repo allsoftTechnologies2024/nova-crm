@@ -65,7 +65,7 @@ export function LoginForm() {
   );
 }
 
-export function SignupForm() {
+export function SignupForm({ trialDays }: { trialDays: number | null }) {
   const router = useRouter();
   const [form, setForm] = useState({ name: '', company: '', email: '', password: '' });
   const set = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement>) => setForm({ ...form, [k]: e.target.value });
@@ -86,7 +86,7 @@ export function SignupForm() {
       <button className="btn-primary w-full py-3" disabled={busy || form.password.length < 8}>
         {busy ? 'Creating workspace…' : 'Create free workspace'}
       </button>
-      <p className="text-center text-xs text-muted">Free on the Starter plan · no card needed</p>
+      <p className="text-center text-xs text-muted">{trialDays ? `${trialDays}-day free trial` : 'Free trial'} · no card needed</p>
     </form>
   );
 }

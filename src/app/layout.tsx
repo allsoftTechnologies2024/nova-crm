@@ -7,10 +7,10 @@ const geistMono = Geist_Mono({ variable: '--font-geist-mono', subsets: ['latin']
 const interTight = Inter_Tight({ variable: '--font-inter-tight', subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: { default: 'LeadPilot — the AI-first CRM', template: '%s · LeadPilot' },
+  title: { default: 'Smart CRM — the AI-first CRM', template: '%s · Smart CRM' },
   description: 'Capture, score and close leads with Claude and Gemini. Role-based access, Razorpay billing.',
-  applicationName: 'LeadPilot',
-  appleWebApp: { capable: true, title: 'LeadPilot', statusBarStyle: 'default' },
+  applicationName: 'Smart CRM',
+  appleWebApp: { capable: true, title: 'Smart CRM', statusBarStyle: 'default' },
   formatDetection: { telephone: false },
 };
 
