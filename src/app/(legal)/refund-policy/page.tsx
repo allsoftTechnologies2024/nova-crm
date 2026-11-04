@@ -1,7 +1,8 @@
 import Doc, { ContactBlock } from '@/components/legal/Doc';
 import { LEGAL } from '@/lib/legal';
+import { publicPage } from '@/lib/seo';
 
-export const metadata = { title: 'Refund & Cancellation Policy', description: `Refunds and cancellations for ${LEGAL.brand} subscriptions.` };
+export const metadata = publicPage('/refund-policy', 'Refund & Cancellation Policy', `Refunds and cancellations for ${LEGAL.brand} subscriptions.`);
 
 export default function RefundPage() {
   return (

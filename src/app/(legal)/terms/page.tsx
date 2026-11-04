@@ -1,8 +1,9 @@
 import Link from 'next/link';
 import Doc, { ContactBlock } from '@/components/legal/Doc';
 import { LEGAL } from '@/lib/legal';
+import { publicPage } from '@/lib/seo';
 
-export const metadata = { title: 'Terms & Conditions', description: `Terms and conditions for using ${LEGAL.brand}.` };
+export const metadata = publicPage('/terms', 'Terms & Conditions', `Terms and conditions for using ${LEGAL.brand}.`);
 
 export default function TermsPage() {
   const b = LEGAL.brand;

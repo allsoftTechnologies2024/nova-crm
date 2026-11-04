@@ -168,7 +168,9 @@ export default function TeamView({ members, me, myRole, canManage, assignable, s
         <h2 className="mb-1 flex items-center gap-2 text-sm font-medium">
           <ShieldCheck className="size-4 text-brand-3" /> Roles &amp; permissions
         </h2>
-        <p className="mb-4 text-xs text-muted">Enforced on the server for every page, API call and AI Copilot action.</p>
+        <p className="mb-4 text-xs text-muted">
+          Enforced on the server for every page, API call and Smalo AI action.<span className="sm:hidden"> Swipe the table to see every role →</span>
+        </p>
         <div className="scroll-thin -mx-5 overflow-x-auto px-5">
           <table className="w-full min-w-[640px] text-xs">
             <thead>
@@ -184,7 +186,7 @@ export default function TeamView({ members, me, myRole, canManage, assignable, s
             <tbody className="divide-y divide-line">
               {PERMISSIONS.map((p) => (
                 <tr key={p}>
-                  <td className="sticky left-0 z-[1] whitespace-nowrap bg-surface py-2.5 pr-4 text-fg/85 shadow-[8px_0_8px_-8px_rgb(60_50_120/0.15)] sm:py-2 sm:shadow-none">{PERMISSION_LABELS[p]}</td>
+                  <td className="sticky left-0 z-[1] whitespace-nowrap bg-surface py-2.5 pr-4 text-fg/85 shadow-[8px_0_8px_-8px_rgb(0_0_0/0.15)] sm:py-2 sm:shadow-none">{PERMISSION_LABELS[p]}</td>
                   {matrix.map((r) => (
                     <td key={r.role} className="px-2 py-2 text-center">
                       {r.permissions.includes(p) ? <Check className="mx-auto size-3.5 text-emerald-500" /> : <span className="text-muted/40">—</span>}

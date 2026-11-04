@@ -3,8 +3,9 @@ import { GoogleButton, LoginForm } from '@/components/app/AuthForms';
 import { ErrorText } from '@/components/ui';
 import { googleConfigured } from '@/lib/auth/google';
 import AuthShell from '@/components/marketing/AuthShell';
+import { publicPage } from '@/lib/seo';
 
-export const metadata = { title: 'Sign in' };
+export const metadata = publicPage('/login', 'Sign in', 'Sign in to your Smalo workspace.');
 
 // Messages for /login?error=… set by the Google sign-in callback.
 const GOOGLE_ERRORS: Record<string, string> = {
@@ -25,7 +26,7 @@ export default async function LoginPage({ searchParams }: PageProps<'/login'>) {
       subtitle="Sign in to pick up where your pipeline left off."
       footer={
         <>
-          New to Smart CRM?{' '}
+          New to Smalo?{' '}
           <Link href="/signup" className="font-semibold text-brand hover:underline">
             Create a free workspace
           </Link>

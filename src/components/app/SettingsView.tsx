@@ -289,7 +289,7 @@ export default function SettingsView({ profile, workspace }: Props) {
         )}
 
         {tab === 'ai' && workspace && (
-          <Panel title="AI model" description="Used for AI capture, lead updates, scoring, drafts and Copilot.">
+          <Panel title="AI model" description="Used for AI capture, lead updates, scoring, drafts and Smalo AI.">
             <Row label="Model" hint={workspace.ai.locked ? 'Set by your platform admin.' : 'Applies to everyone in the workspace.'}>
               {workspace.ai.options.length ? (
                 <div role="radiogroup" aria-label="AI model" className="grid gap-2 sm:grid-cols-2">

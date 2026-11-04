@@ -64,7 +64,7 @@ export default function BillingView({ plans, current, usage, payments, configure
       const rzp = new window.Razorpay({
         key: start.keyId,
         ...(recurring ? { subscription_id: start.subscriptionId } : { order_id: start.orderId, amount: start.amount, currency: start.currency }),
-        name: 'Smart CRM',
+        name: 'Smalo',
         description: start.description,
         prefill: start.prefill,
         theme: { color: '#151515' },
@@ -112,7 +112,7 @@ export default function BillingView({ plans, current, usage, payments, configure
           <span className="rounded-full bg-brand-2 px-2.5 py-0.5 text-xs font-bold text-white">Free trial</span>
           <span>
             You&apos;re on a free trial with <b>{current.name}</b> limits — <b>{current.status.daysLeft} day{current.status.daysLeft === 1 ? '' : 's'} left</b>. Subscribe to a plan below for more seats,
-            leads and AI, and to keep using Smart CRM when the trial ends.
+            leads and AI, and to keep using Smalo when the trial ends.
           </span>
         </div>
       )}

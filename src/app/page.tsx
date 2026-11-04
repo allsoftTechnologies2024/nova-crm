@@ -2,6 +2,8 @@ import { ArrowRight, ArrowUpRight, Bot, Check, Compass, Feather, Hexagon, Layers
 import Image from 'next/image';
 import Link from 'next/link';
 import type { CSSProperties } from 'react';
+import { LEGAL } from '@/lib/legal';
+import { SITE_DESCRIPTION, publicPage } from '@/lib/seo';
 import Bubble from '@/components/marketing/Bubble';
 import { FeatureSlider, RoleTabs, StepsCarousel } from '@/components/marketing/LandingInteractive';
 import LegalLinks from '@/components/legal/LegalLinks';
@@ -32,7 +34,7 @@ const TEAM = [
 ] as const;
 
 const BADGES = [PenTool, Feather, Layers, Target, Compass, Send, Hexagon];
-const MARQUEE = ['Capture by voice', 'Scored by AI', 'Follow-ups written', 'Copilot that acts', 'Built for teams'];
+const MARQUEE = ['Capture by voice', 'Scored by AI', 'Follow-ups written', 'Smalo AI that acts', 'Built for teams'];
 const MARQUEE_ICONS = [Mic, Sparkles, Mail, Bot, Users];
 
 const initials = (name: string) =>
@@ -57,6 +59,8 @@ function TeamRow({ reverse = false }: { reverse?: boolean }) {
   );
 }
 
+export const metadata = publicPage('/', null);
+
 // Pricing comes from the plans managed in the platform console; refreshed every minute.
 export const revalidate = 60;
 
@@ -74,13 +78,30 @@ async function pricing(): Promise<{ trial: { days: number; plan: Plan } | null; 
 
 export default async function Home() {
   const { trial, paid } = await pricing();
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@graph': [
+      { '@type': 'Organization', name: LEGAL.brand, url: LEGAL.website, logo: `${LEGAL.website}/icon.svg` },
+      { '@type': 'WebSite', name: LEGAL.brand, url: LEGAL.website },
+      {
+        '@type': 'SoftwareApplication',
+        name: LEGAL.brand,
+        url: LEGAL.website,
+        description: SITE_DESCRIPTION,
+        applicationCategory: 'BusinessApplication',
+        operatingSystem: 'Web',
+        offers: paid.map((p) => ({ '@type': 'Offer', name: p.name, price: p.priceMonthly / 100, priceCurrency: 'INR', url: `${LEGAL.website}/signup` })),
+      },
+    ],
+  };
   return (
     <div className="mk min-h-screen overflow-x-clip bg-[#ebebe8]">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, '\\u003c') }} />
       {/* Framed nav + hero (the white "browser frame" from the reference) */}
       <div className="p-2 sm:p-4">
         <div className="relative overflow-hidden rounded-[28px] bg-white sm:rounded-[36px]">
           <header className="relative z-20 flex items-center justify-between gap-4 px-5 py-5 sm:px-10 sm:py-7">
-            <Link href="/" aria-label="Smart CRM home">
+            <Link href="/" aria-label="Smalo home">
               <Logo className="text-lg text-ink" />
             </Link>
             <nav className="hidden items-center rounded-full bg-chalk p-1 text-sm font-medium md:flex" aria-label="Main">
@@ -107,14 +128,14 @@ export default async function Home() {
           <section className="px-5 pt-8 text-center sm:px-10 sm:pt-12">
             <Link href="/signup" className="inline-flex animate-fade-up items-center gap-2 rounded-full bg-chalk py-1 pl-1 pr-3 text-xs font-medium transition hover:bg-black/5">
               <span className="rounded-full bg-rouge px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-white">New</span>
-              Copilot now takes actions for you
+              Smalo AI now takes actions for you
               <ArrowRight className="size-3.5" />
             </Link>
             <h1 className="display mx-auto mt-6 max-w-4xl animate-fade-up text-[2.75rem] sm:text-7xl xl:text-[5.5rem]">
               Capture, score <span className="text-rouge">&amp; close every deal.</span>
             </h1>
             <p className="mx-auto mt-6 max-w-lg animate-fade-up text-base text-ink-soft sm:text-lg">
-              CRM software for your sales team. Add your customers by voice, text or photo — Smart CRM organises them, suggests the next step, drafts the follow-up and keeps your pipeline current.
+              CRM software for your sales team. Add your customers by voice, text or photo — Smalo organises them, suggests the next step, drafts the follow-up and keeps your pipeline current.
             </p>
             <div className="mt-8 flex animate-fade-up flex-wrap justify-center gap-2">
               <Link href="/signup" className="pill-dark px-6 py-3">
@@ -129,14 +150,14 @@ export default async function Home() {
             {/* Product screenshot, cut off by the bottom of the frame */}
             <div className="relative mx-auto mt-14 max-w-6xl sm:mt-16">
               <Bubble className="absolute left-[30%] top-[13%] z-10 hidden -rotate-3 animate-float bg-ink md:inline-flex">Live pipeline</Bubble>
-              <Bubble className="absolute left-[60%] top-[12%] z-10 hidden animate-float bg-ink [animation-delay:1s] md:inline-flex">@copilot</Bubble>
-              <Bubble className="absolute left-[64%] top-[33%] z-10 hidden rotate-3 animate-float bg-rouge [animation-delay:2s] md:inline-flex">Auto-updated</Bubble>
+              <Bubble className="absolute left-[60%] top-[12%] z-10 hidden animate-float bg-ink [animation-delay:1s] md:inline-flex">@smalo</Bubble>
+              <Bubble className="absolute left-[64%] top-[29%] z-10 hidden rotate-3 animate-float bg-rouge [animation-delay:2s] md:inline-flex">Auto-updated</Bubble>
               <div className="-mb-px h-[clamp(230px,52vw,600px)] animate-rise overflow-hidden rounded-t-[20px] bg-chalk p-1.5 pb-0 sm:rounded-t-[28px] sm:p-3 sm:pb-0">
                 <Image
-                  src="/marketing/dash.png"
-                  alt="Smart CRM dashboard with pipeline overview, AI Copilot, won deals and team activity"
+                  src="/marketing/smalo-dashboard.png"
+                  alt="Smalo dashboard with pipeline overview, Smalo AI, won deals and team activity"
                   width={2338}
-                  height={1460}
+                  height={1461}
                   sizes="(min-width: 1200px) 1152px, 100vw"
                   loading="eager"
                   fetchPriority="high"
@@ -282,12 +303,12 @@ export default async function Home() {
         <Reveal>
           <div className="grid gap-8 rounded-[28px] bg-white p-8 sm:p-10 md:grid-cols-[1fr_1.2fr]">
             <div>
-              <p className="eyebrow text-ink-soft">About Smart CRM</p>
+              <p className="eyebrow text-ink-soft">About Smalo</p>
               <h2 className="display mt-4 text-4xl sm:text-5xl">CRM software for your own customers.</h2>
             </div>
             <div className="space-y-4 text-ink-soft">
               <p>
-                Smart CRM is a customer relationship management app sold as a monthly or yearly subscription (SaaS). Small businesses and sales teams use it to keep their
+                Smalo is a customer relationship management app sold as a monthly or yearly subscription (SaaS). Small businesses and sales teams use it to keep their
                 customers, contacts, deals, notes and follow-ups in one place, with AI that helps them write and prioritise.
               </p>
               <ul className="space-y-2 text-sm">
@@ -349,7 +370,7 @@ export default async function Home() {
               <br />
               on board?
             </h2>
-            <p className="mt-3 max-w-sm text-ink-soft">Pick up right where your pipeline left off. Copilot has your day planned.</p>
+            <p className="mt-3 max-w-sm text-ink-soft">Pick up right where your pipeline left off. Smalo AI has your day planned.</p>
             <Link href="/login" className="pill-dark mt-6 w-fit">
               Sign in <Trophy className="size-4" />
             </Link>
@@ -361,7 +382,7 @@ export default async function Home() {
         <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4 px-5 text-sm text-ink-soft">
           <Logo className="text-ink" />
           <LegalLinks />
-          <p>© {new Date().getFullYear()} Smart CRM · CRM software (SaaS)</p>
+          <p>© {new Date().getFullYear()} Smalo · CRM software (SaaS)</p>
         </div>
       </footer>
     </div>

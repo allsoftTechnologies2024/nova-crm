@@ -13,8 +13,28 @@ const ACTION_LABEL: Record<string, string> = {
 
 export default async function AuditPage() {
   const logs = await recentLogs(200);
+  const label = (action: string) => (
+    <span className={`chip ${action.includes('delete') ? 'bg-rose-50 text-rose-600 ring-rose-200' : 'bg-brand/10 text-brand ring-brand/20'}`}>{ACTION_LABEL[action] ?? action}</span>
+  );
   return (
-    <div className="card scroll-thin overflow-x-auto">
+    <>
+    {/* Phones: one card per entry. */}
+    <ul className="space-y-2.5 md:hidden">
+      {logs.map((l) => (
+        <li key={l.id} className="card p-4">
+          <div className="flex flex-wrap items-center gap-2">
+            {label(l.action)}
+            <span className="ml-auto">
+              <When value={l.at} />
+            </span>
+          </div>
+          <p className="mt-2 text-sm">{l.summary}</p>
+          <p className="mt-1 text-xs text-muted">by {l.actor}</p>
+        </li>
+      ))}
+      {logs.length === 0 && <li className="card px-5 py-10 text-center text-sm text-muted">No admin actions yet. Every override, suspension, password reset and sign-in-as is recorded here.</li>}
+    </ul>
+    <div className="card scroll-thin hidden overflow-x-auto md:block">
       <table className="w-full min-w-[760px] text-sm">
         <thead className="text-left text-xs text-muted">
           <tr className="border-b border-line">
@@ -32,9 +52,7 @@ export default async function AuditPage() {
                 <When value={l.at} />
               </td>
               <td className="px-5 py-3 text-muted">{l.actor}</td>
-              <td className="px-5 py-3">
-                <span className={`chip ${l.action.includes('delete') ? 'bg-rose-50 text-rose-600 ring-rose-200' : 'bg-brand/10 text-brand ring-brand/20'}`}>{ACTION_LABEL[l.action] ?? l.action}</span>
-              </td>
+              <td className="px-5 py-3">{label(l.action)}</td>
               <td className="px-5 py-3">{l.summary}</td>
             </tr>
           ))}
@@ -48,5 +66,6 @@ export default async function AuditPage() {
         </tbody>
       </table>
     </div>
+    </>
   );
 }

@@ -2,8 +2,9 @@ import { cookies } from 'next/headers';
 import AdminRail, { AdminHeader } from '@/platform/components/AdminRail';
 import { ADMIN_SIDEBAR_COOKIE } from '@/platform/prefs';
 import { requirePlatformAdminPage } from '@/platform/auth/session';
+import { NO_INDEX } from '@/lib/seo';
 
-export const metadata = { title: { default: 'Platform admin', template: '%s · Platform admin' } };
+export const metadata = { title: { default: 'Platform admin', template: '%s · Platform admin' }, robots: NO_INDEX };
 
 // Platform console. Uses its own admin account + cookie (see /admin/login); workspace logins never get in.
 export default async function AdminLayout({ children }: LayoutProps<'/admin'>) {

@@ -198,7 +198,30 @@ function TeamTable({ rows, period, viewAll }: { rows: MemberStats[]; period: Per
         <h2 className="text-base font-bold">{viewAll ? 'Team at a glance' : 'Your numbers'}</h2>
         <span className="text-xs font-semibold text-muted">Last {PERIOD_LABEL[period]}</span>
       </div>
-      <div className="scroll-thin overflow-x-auto">
+      {/* Phones: one card per member with the numbers in a grid. */}
+      <ul className="divide-y divide-line sm:hidden">
+        {sorted.map((m) => (
+          <li key={m.id} className={`px-5 py-4 ${m.active ? '' : 'opacity-50'}`}>
+            <div className="flex items-center gap-3">
+              <span className="grid size-8 shrink-0 place-items-center rounded-full bg-surface-2 text-xs font-bold">{initialOf(m.name)}</span>
+              <div className="min-w-0 flex-1">
+                <p className="truncate font-semibold">{m.name}</p>
+                <p className="text-xs text-muted">{ROLE_META[m.role].label}</p>
+              </div>
+              <span className="shrink-0 text-right text-xs text-muted">{m.lastActive ? <When value={m.lastActive} ago /> : 'Never active'}</span>
+            </div>
+            <dl className="mt-3 grid grid-cols-3 gap-2">
+              {cols.map(([h, get]) => (
+                <div key={h} className="rounded-xl bg-surface-2 px-2.5 py-2">
+                  <dt className="truncate text-[10px] font-medium text-muted">{h}</dt>
+                  <dd className="text-sm font-semibold tabular-nums">{get(m)}</dd>
+                </div>
+              ))}
+            </dl>
+          </li>
+        ))}
+      </ul>
+      <div className="scroll-thin hidden overflow-x-auto sm:block">
         <table className="w-full min-w-[820px] text-sm">
           <thead className="text-left text-xs text-muted">
             <tr className="border-b border-line">
@@ -332,10 +355,11 @@ function ActivityLog({ initial, members, viewAll }: { initial: Props['initial'];
           <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted" />
           <input className="input py-2 pl-9 text-xs" placeholder="Search activity…" value={filters.q} onChange={(e) => setFilters({ ...filters, q: e.target.value })} />
         </div>
+        <div className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto sm:flex-wrap sm:items-center">
         {viewAll && (
           <Select
             size="sm"
-            className="w-40"
+            className="w-full sm:w-40"
             aria-label="Filter by member"
             value={filters.actor}
             onChange={(actor) => setFilters({ ...filters, actor })}
@@ -344,16 +368,17 @@ function ActivityLog({ initial, members, viewAll }: { initial: Props['initial'];
         )}
         <Select
           size="sm"
-          className="w-44"
+          className="w-full sm:w-44"
           aria-label="Filter by type"
           value={filters.category}
           onChange={(category) => setFilters({ ...filters, category })}
           options={[{ value: '', label: 'All activity' }, ...(Object.keys(CATEGORY) as Category[]).map((c) => ({ value: c, label: CATEGORY[c].label }))]}
         />
-        <Select size="sm" className="w-36" aria-label="Date range" value={filters.days} onChange={(days) => setFilters({ ...filters, days })} options={RANGES} />
+        <Select size="sm" className="w-full sm:w-36" aria-label="Date range" value={filters.days} onChange={(days) => setFilters({ ...filters, days })} options={RANGES} />
         <a href={`/api/activity/export?${params}`} className="btn-ghost py-2 text-xs" download>
           <Download className="size-3.5" /> CSV
         </a>
+        </div>
       </div>
 
       {error && (

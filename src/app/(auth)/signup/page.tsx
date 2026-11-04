@@ -3,8 +3,9 @@ import { GoogleButton, SignupForm } from '@/components/app/AuthForms';
 import { googleConfigured } from '@/lib/auth/google';
 import AuthShell from '@/components/marketing/AuthShell';
 import { getPlan, getSettings } from '@/lib/services/plans';
+import { publicPage } from '@/lib/seo';
 
-export const metadata = { title: 'Create your workspace' };
+export const metadata = publicPage('/signup', 'Create your workspace', 'Start your free Smalo trial and set up your sales workspace in minutes.');
 
 // Trial length for the "N-day free trial" note under the form (null if the trial is off or its plan is disabled).
 async function trialDays() {

@@ -1,7 +1,8 @@
 import Doc, { ContactBlock } from '@/components/legal/Doc';
 import { LEGAL } from '@/lib/legal';
+import { publicPage } from '@/lib/seo';
 
-export const metadata = { title: 'Privacy Policy', description: `How ${LEGAL.brand} collects, uses and protects your data.` };
+export const metadata = publicPage('/privacy', 'Privacy Policy', `How ${LEGAL.brand} collects, uses and protects your data.`);
 
 export default function PrivacyPage() {
   const b = LEGAL.brand;

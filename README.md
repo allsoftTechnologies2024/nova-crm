@@ -1,9 +1,9 @@
-# Smart CRM — AI-first SaaS CRM
+# Smalo — AI-first SaaS CRM
 
 Next.js 16 (App Router) · TypeScript · Tailwind CSS v4 · MongoDB · Claude + Gemini · Razorpay.
 
 A multi-tenant lead-management SaaS where AI does the data entry: paste notes, dictate, or snap a business card and
-leads appear; tell the AI what happened on a call and the lead updates itself; a Copilot reads your pipeline and acts on it.
+leads appear; tell the AI what happened on a call and the lead updates itself; Smalo AI reads your pipeline and acts on it.
 
 ## Setup
 
@@ -29,7 +29,7 @@ npm run dev                  # http://localhost:3000 → "Start free" creates a 
 - **Tell AI what happened** — free-text update → stage, value, follow-up time, tags and a timeline entry.
 - **Lead scoring** — 0–100 score, summary and next best action, saved on the lead.
 - **Follow-up writer** — email or WhatsApp drafts from the lead's history, opened in mail / WhatsApp.
-- **Copilot** — streaming chat with tools (`search_leads`, `get_lead`, `pipeline_summary`, `due_followups`, `update_lead`, `create_lead`).
+- **Smalo AI** — streaming chat with tools (`search_leads`, `get_lead`, `pipeline_summary`, `due_followups`, `update_lead`, `create_lead`).
   Tools go through the same RBAC-scoped services as the UI, and tools a role can't use are never offered.
   Chat history is saved per user (private) in MongoDB. The server rebuilds context from the saved chat, so the browser can't inject fake history.
 - **Metering** — every AI action uses one credit from the plan's monthly allowance (atomic in MongoDB, refunded if the AI call fails).
@@ -62,7 +62,7 @@ src/
       claude.ts gemini.ts  adapters (structured JSON output, streaming tool loop, retries/fallbacks, readable errors)
       index.ts             provider resolution + credit metering (withAi)
       features.ts          capture / update / score / draft prompts + JSON schemas
-      copilot.ts           Copilot tools (zod-validated, permission-gated) + system prompt
+      copilot.ts           Smalo AI tools (zod-validated, permission-gated) + system prompt
   models/                  Organization, User, Lead, Payment (Mongoose)
   components/              ui primitives, app shell, leads, ai
 ```
@@ -74,4 +74,4 @@ Rules that keep it maintainable:
 
 ### Claude specifics
 Default model is `claude-opus-5-5`, and `claude-sonnet-5-5` and `claude-haiku-4-5` are selectable in Settings. Opus and Sonnet run at `effort: "low"`,
-which suits CRM-sized tasks, with server-side refusal fallback enabled (`fallbacks: "default"`). The Copilot system prompt is prompt-cached.
+which suits CRM-sized tasks, with server-side refusal fallback enabled (`fallbacks: "default"`). The Smalo AI system prompt is prompt-cached.

@@ -1,7 +1,8 @@
 import { Clock, Globe, Mail, MapPin, Phone, User } from 'lucide-react';
 import { LEGAL } from '@/lib/legal';
+import { publicPage } from '@/lib/seo';
 
-export const metadata = { title: 'Contact Us', description: `Get in touch with ${LEGAL.brand}.` };
+export const metadata = publicPage('/contact', 'Contact Us', `Get in touch with ${LEGAL.brand}.`);
 
 export default function ContactPage() {
   const rows = [

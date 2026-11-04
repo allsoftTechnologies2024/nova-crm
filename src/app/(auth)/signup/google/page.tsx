@@ -4,8 +4,9 @@ import { GoogleWorkspaceForm } from '@/components/app/AuthForms';
 import AuthShell from '@/components/marketing/AuthShell';
 import { GOOGLE_SIGNUP_COOKIE, verifyPendingSignup } from '@/lib/auth/google';
 import { getPlan, getSettings } from '@/lib/services/plans';
+import { NO_INDEX } from '@/lib/seo';
 
-export const metadata = { title: 'Name your workspace' };
+export const metadata = { title: 'Name your workspace', robots: NO_INDEX };
 
 // After "Continue with Google" for someone without an account: ask only for the workspace name.
 export default async function GoogleSignupPage() {

@@ -47,7 +47,7 @@ const modeOf = (v: number | null): LimitMode => (v == null ? 'plan' : v < 0 ? 'u
 
 function Card({ icon, title, description, children, tone }: { icon: ReactNode; title: string; description?: string; children: ReactNode; tone?: 'danger' }) {
   return (
-    <section className={`card p-6 ${tone === 'danger' ? 'ring-1 ring-rose-200' : ''}`}>
+    <section className={`card p-5 sm:p-6 ${tone === 'danger' ? 'ring-1 ring-rose-200' : ''}`}>
       <div className="mb-5 flex items-start gap-4">
         <span className={`grid size-11 shrink-0 place-items-center rounded-2xl text-white ${tone === 'danger' ? 'bg-rose-500' : 'icon-tile'}`}>{icon}</span>
         <div>
@@ -251,7 +251,23 @@ export default function OrgDetail({ org, models, plans, trial }: Props) {
       </div>
 
       <Card icon={<Users className="size-5" />} title="Members" description="Change roles (including owner), reset passwords, deactivate, or sign in as a member for support.">
-        <div className="scroll-thin -mx-6 overflow-x-auto px-6">
+        {/* Phones: stacked member cards with the same controls. */}
+        <ul className="divide-y divide-line md:hidden">
+          {org.members.map((m) => (
+            <li key={m.id} className={`space-y-2.5 py-3 ${m.active ? '' : 'opacity-50'}`}>
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="truncate font-bold">{m.name}</p>
+                  <p className="truncate text-xs text-muted">{m.email}</p>
+                </div>
+                <span className="shrink-0 text-xs font-semibold">{m.active ? <span className="text-success">Active</span> : <span className="text-muted">Deactivated</span>}</span>
+              </div>
+              <RoleSelect user={m} onError={setError} />
+              <UserButtons user={m} onError={setError} />
+            </li>
+          ))}
+        </ul>
+        <div className="scroll-thin -mx-6 hidden overflow-x-auto px-6 md:block">
           <table className="w-full min-w-[620px] text-sm">
             <tbody className="divide-y divide-line">
               {org.members.map((m) => (

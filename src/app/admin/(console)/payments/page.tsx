@@ -15,7 +15,38 @@ export default async function PaymentsPage() {
       <p className="text-sm font-medium text-muted">
         {paid.length} paid · {formatINR(paid.reduce((a, p) => a + p.amount, 0))} collected · {payments.length - paid.length} unpaid checkouts
       </p>
-      <div className="card scroll-thin overflow-x-auto">
+      {/* Phones: one card per payment. */}
+      <ul className="space-y-2.5 md:hidden">
+        {payments.map((p) => (
+          <li key={p.id} className="card p-4">
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <Link href={`/admin/workspaces/${p.org.id}`} className="block truncate font-bold hover:text-brand">
+                  {p.org.name}
+                </Link>
+                <p className="text-xs text-muted">
+                  {names.get(p.plan) ?? p.plan} · {p.period}
+                </p>
+              </div>
+              <p className="shrink-0 font-semibold tabular-nums">{formatINR(p.amount)}</p>
+            </div>
+            <div className="mt-2 flex flex-wrap items-center gap-1.5">
+              <span className={`chip ${p.status === 'paid' ? 'bg-success/10 text-success ring-success/20' : 'bg-surface-2 text-muted ring-line'}`}>{p.status}</span>
+              <span className="chip bg-surface-2 text-muted ring-line">{({ checkout: 'Checkout', subscription: 'Autopay', link: 'Link', manual: 'Offline' } as Record<string, string>)[p.method] ?? p.method}</span>
+              <span className="ml-auto">
+                <When value={p.at} />
+              </span>
+            </div>
+            <p className="mt-2 break-all font-mono text-[11px] text-muted">
+              {p.orderId}
+              {p.paymentId && <span className="block">{p.paymentId}</span>}
+            </p>
+          </li>
+        ))}
+        {payments.length === 0 && <li className="card px-5 py-10 text-center text-sm text-muted">No payments yet.</li>}
+      </ul>
+
+      <div className="card scroll-thin hidden overflow-x-auto md:block">
         <table className="w-full min-w-[860px] text-sm">
           <thead className="text-left text-xs text-muted">
             <tr className="border-b border-line">

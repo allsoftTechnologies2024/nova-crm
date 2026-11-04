@@ -11,7 +11,7 @@ export function Logo({ className = '' }: { className?: string }) {
       <span className="grid size-8 place-items-center rounded-xl bg-brand text-[14px] font-bold text-white shadow-float">
         S
       </span>
-      Smart CRM
+      Smalo
     </span>
   );
 }

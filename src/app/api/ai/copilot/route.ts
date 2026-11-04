@@ -71,7 +71,7 @@ export const POST = route(async (req) => {
           })
         );
       } catch (err) {
-        send({ type: 'error', message: err instanceof HttpError ? err.message : 'Copilot hit an error. Please try again.' });
+        send({ type: 'error', message: err instanceof HttpError ? err.message : 'Smalo AI hit an error. Please try again.' });
         if (!(err instanceof HttpError)) console.error(err);
       }
       const changed = reply.tools.filter((t) => t === 'update_lead' || t === 'create_lead').length;
@@ -79,7 +79,7 @@ export const POST = route(async (req) => {
         await logActivity(actorOf(auth), {
           action: 'ai.copilot',
           category: 'ai',
-          summary: `Asked Copilot: “${message.slice(0, 120)}”${changed ? ` · Copilot made ${changed} lead change(s)` : ''}`,
+          summary: `Asked Smalo AI: “${message.slice(0, 120)}”${changed ? ` · Smalo AI made ${changed} lead change(s)` : ''}`,
           meta: { tools: reply.tools },
         });
       }

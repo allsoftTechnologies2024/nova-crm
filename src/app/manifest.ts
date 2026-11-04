@@ -3,8 +3,8 @@ import type { MetadataRoute } from 'next';
 // Lets phones "Add to Home Screen" and open the CRM full-screen like a native app.
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: 'Smart CRM — the AI-first CRM',
-    short_name: 'Smart CRM',
+    name: 'Smalo — AI CRM for small sales teams',
+    short_name: 'Smalo',
     description: 'Capture, score and close leads with AI.',
     start_url: '/app',
     scope: '/',

@@ -2,13 +2,13 @@
 // Edit here — every page updates. Required by Razorpay for live payments.
 
 export const LEGAL = {
-  brand: 'Smart CRM',
+  brand: 'Smalo',
   // The person (or registered entity) that operates the service and receives payments. Must match the
   // name on your Razorpay account / bank account.
   operator: 'Deepak T S',
   entity: 'an individual (sole proprietor, not yet a registered company)',
-  website: 'https://smartcrm.deepakts.com',
-  domain: 'smartcrm.deepakts.com',
+  website: 'https://smalo.in',
+  domain: 'smalo.in',
   email: 'smartcrm@gmail.com',
   phone: '+91 85906 41172',
   phoneHref: 'tel:+918590641172',
@@ -17,7 +17,7 @@ export const LEGAL = {
   country: 'India',
   supportHours: 'Monday to Saturday, 10:00 AM – 6:00 PM IST',
   refundWindowDays: 7, // business days to process an approved refund
-  updated: '2 October 2026',
+  updated: '5 November 2026',
 } as const;
 
 export const LEGAL_LINKS = [

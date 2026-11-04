@@ -27,7 +27,7 @@ export default function AuthShell({ title, subtitle, children, footer }: { title
         </div>
         <div className="space-y-2 text-xs text-ink-soft">
           <LegalLinks />
-          <p>© {new Date().getFullYear()} Smart CRM · Secure sign-in</p>
+          <p>© {new Date().getFullYear()} Smalo · Secure sign-in</p>
         </div>
       </div>
 

@@ -10,7 +10,7 @@ import { SIDEBAR_COOKIE, api } from '@/lib/client';
 const ITEMS = [
   { key: 'dashboard', href: '/app', label: 'Dashboard', short: 'Home', icon: Home },
   { key: 'leads', href: '/app/leads', label: 'Leads', short: 'Leads', icon: LayoutGrid },
-  { key: 'copilot', href: '/app/copilot', label: 'AI Copilot', short: 'Copilot', icon: Sparkles },
+  { key: 'copilot', href: '/app/copilot', label: 'Smalo AI', short: 'Smalo AI', icon: Sparkles },
   { key: 'team', href: '/app/team', label: 'Team', short: 'Team', icon: Users },
   { key: 'activity', href: '/app/activity', label: 'Activity', short: 'Activity', icon: History },
   { key: 'billing', href: '/app/billing', label: 'Billing', short: 'Billing', icon: CreditCard },
@@ -75,11 +75,11 @@ export default function Sidebar({ nav, orgName, defaultOpen, user, quickAdd }: P
           <ChevronLeft className={`size-4 transition-transform duration-300 ${open ? '' : 'rotate-180'}`} strokeWidth={2.6} />
         </button>
 
-        <Link href="/app" className={`flex items-center gap-3 ${open ? 'px-1' : ''}`} aria-label="Smart CRM home">
+        <Link href="/app" className={`flex items-center gap-3 ${open ? 'px-1' : ''}`} aria-label="Smalo home">
           <span className="grid size-11 shrink-0 place-items-center rounded-2xl bg-white/15 text-lg font-bold text-white ring-1 ring-white/25">S</span>
           {open && (
             <span className="min-w-0 animate-fade-up text-white">
-              <span className="block text-base font-bold leading-tight">Smart CRM</span>
+              <span className="block text-base font-bold leading-tight">Smalo</span>
               <span className="block truncate text-xs text-white/65">{orgName}</span>
             </span>
           )}

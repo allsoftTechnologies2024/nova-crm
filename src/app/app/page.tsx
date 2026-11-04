@@ -49,7 +49,7 @@ export default async function Dashboard({ searchParams }: PageProps<'/app'>) {
                   <Bot className="size-7 sm:size-8" />
                 </span>
                 <span className="min-w-0">
-                  <span className="block text-lg font-bold">AI Copilot</span>
+                  <span className="block text-lg font-bold">Smalo AI</span>
                   <span className="flex items-center gap-1 text-sm text-white/75">
                     Plan my day <ArrowRight className="size-3.5 transition group-hover:translate-x-0.5" />
                   </span>
@@ -107,11 +107,11 @@ export default async function Dashboard({ searchParams }: PageProps<'/app'>) {
                 <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-surface-2">
                   <div className={`h-full rounded-full ${pct > 85 ? 'bg-brand-2' : 'bg-success'}`} style={{ width: `${finite ? Math.max(pct, 2) : 4}%` }} />
                 </div>
-                <div className="mt-4 flex items-center justify-between">
-                  <span className="text-xs text-muted">
+                <div className="mt-4 flex flex-wrap items-center justify-between gap-2">
+                  <span className="whitespace-nowrap text-xs text-muted">
                     {used.toLocaleString('en-IN')} / {finite ? `${limit.toLocaleString('en-IN')} ${unit}` : 'unlimited'}
                   </span>
-                  <span className="pill">{planPill}</span>
+                  <span className="pill whitespace-nowrap">{planPill}</span>
                 </div>
               </div>
             );

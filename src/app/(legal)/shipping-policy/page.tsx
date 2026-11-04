@@ -1,7 +1,8 @@
 import Doc, { ContactBlock } from '@/components/legal/Doc';
 import { LEGAL } from '@/lib/legal';
+import { publicPage } from '@/lib/seo';
 
-export const metadata = { title: 'Shipping & Delivery Policy', description: `How ${LEGAL.brand} is delivered.` };
+export const metadata = publicPage('/shipping-policy', 'Shipping & Delivery Policy', `How ${LEGAL.brand} is delivered.`);
 
 export default function ShippingPage() {
   return (

@@ -1,7 +1,8 @@
 import { ResetForm } from '@/components/app/AuthForms';
 import AuthShell from '@/components/marketing/AuthShell';
+import { NO_INDEX } from '@/lib/seo';
 
-export const metadata = { title: 'Reset password' };
+export const metadata = { title: 'Reset password', robots: NO_INDEX };
 
 export default async function ResetPasswordPage({ searchParams }: PageProps<'/reset-password'>) {
   const { token } = await searchParams;

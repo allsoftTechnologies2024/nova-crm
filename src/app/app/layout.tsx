@@ -7,6 +7,9 @@ import { aiUsage } from '@/lib/ai';
 import { requirePage } from '@/lib/auth/session';
 import { SIDEBAR_COOKIE } from '@/lib/client';
 import { ROLE_META } from '@/lib/rbac';
+import { NO_INDEX } from '@/lib/seo';
+
+export const metadata = { robots: NO_INDEX };
 
 export default async function AppLayout({ children }: LayoutProps<'/app'>) {
   const auth = await requirePage();

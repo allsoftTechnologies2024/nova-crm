@@ -29,7 +29,7 @@ const DEFAULT_PLANS = [
     priceMonthly: 99900,
     priceYearly: 959000,
     limits: { seats: 10, leads: 5000, aiCredits: 1000 },
-    features: ['10 team members', '5,000 leads', '1,000 AI actions / month', 'AI Copilot with actions', 'Role-based access'],
+    features: ['10 team members', '5,000 leads', '1,000 AI actions / month', 'Smalo AI with actions', 'Role-based access'],
     popular: true,
     sortOrder: 1,
   },

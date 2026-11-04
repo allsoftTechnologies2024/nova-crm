@@ -82,7 +82,7 @@ export default function Copilot({ conversationId, initialMessages, history, init
       });
       if (!res.ok || !res.body) {
         const data = await res.json().catch(() => ({}));
-        throw new Error(data.message || 'Copilot is unavailable.');
+        throw new Error(data.message || 'Smalo AI is unavailable.');
       }
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
@@ -164,7 +164,7 @@ export default function Copilot({ conversationId, initialMessages, history, init
       <div className="flex min-w-0 flex-1 flex-col">
         <div className="mb-3 flex items-center justify-between gap-3 sm:mb-4">
           <div className="min-w-0">
-            <h1 className="sr-only">Copilot</h1>
+            <h1 className="sr-only">Smalo AI</h1>
             <p className="line-clamp-2 text-xs font-medium text-muted sm:text-sm">
               Ask about your pipeline{canEdit ? ', or tell it to update leads' : ''}. {modelLabel && <span className="text-brand-3">Powered by {modelLabel}</span>}
             </p>

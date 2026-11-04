@@ -66,7 +66,7 @@ export default function ProductCollage({ compact = false }: { compact?: boolean 
       {/* Copilot bubble */}
       <div className="card absolute -bottom-6 right-0 hidden w-60 p-3.5 sm:block">
         <p className="flex items-center gap-1.5 text-[11px] font-semibold text-muted">
-          <Bot className="size-3.5 text-brand" /> Copilot
+          <Bot className="size-3.5 text-brand" /> Smalo AI
         </p>
         <p className="mt-1.5 text-xs leading-relaxed">
           Call <b>Mehta Logistics</b> first — hot deal, proposal due Friday. I moved it to <b>Proposal</b> ✓

@@ -8,15 +8,15 @@ import { api } from '@/lib/client';
 import { ADMIN_SIDEBAR_COOKIE } from '@/platform/prefs';
 
 const ITEMS = [
-  { href: '/admin', label: 'Overview', icon: LayoutDashboard },
-  { href: '/admin/workspaces', label: 'Workspaces', icon: Building2 },
-  { href: '/admin/users', label: 'Users', icon: Users },
-  { href: '/admin/plans', label: 'Plans', icon: Layers },
-  { href: '/admin/ai-models', label: 'AI models', icon: Cpu },
-  { href: '/admin/payments', label: 'Payments', icon: CreditCard },
-  { href: '/admin/audit', label: 'Audit log', icon: ScrollText },
-  { href: '/admin/admins', label: 'Platform admins', icon: UserCog },
-  { href: '/admin/account', label: 'My account', icon: KeyRound },
+  { href: '/admin', label: 'Overview', short: 'Overview', icon: LayoutDashboard },
+  { href: '/admin/workspaces', label: 'Workspaces', short: 'Workspaces', icon: Building2 },
+  { href: '/admin/users', label: 'Users', short: 'Users', icon: Users },
+  { href: '/admin/plans', label: 'Plans', short: 'Plans', icon: Layers },
+  { href: '/admin/ai-models', label: 'AI models', short: 'AI', icon: Cpu },
+  { href: '/admin/payments', label: 'Payments', short: 'Payments', icon: CreditCard },
+  { href: '/admin/audit', label: 'Audit log', short: 'Audit', icon: ScrollText },
+  { href: '/admin/admins', label: 'Platform admins', short: 'Admins', icon: UserCog },
+  { href: '/admin/account', label: 'My account', short: 'Account', icon: KeyRound },
 ];
 const active = (p: string, href: string) => (href === '/admin' ? p === '/admin' : p.startsWith(href));
 export const adminSection = (p: string) => [...ITEMS].reverse().find((i) => active(p, i.href))?.label ?? 'Overview';
@@ -93,10 +93,18 @@ export default function AdminRail({ defaultOpen }: { defaultOpen: boolean }) {
         </button>
       </aside>
 
-      <nav className="scroll-thin fixed inset-x-3 bottom-3 z-40 flex justify-between gap-1 overflow-x-auto rounded-[26px] bg-fg px-2 py-2 lg:hidden">
-        {ITEMS.map(({ href, label, icon: Icon }) => (
-          <Link key={href} href={href} aria-label={label} className={`grid size-11 shrink-0 place-items-center rounded-2xl ${active(pathname, href) ? 'bg-brand-2 text-white' : 'text-white/60'}`}>
+      {/* Phones/tablets: scrollable bottom bar with short labels (9 sections don't fit as bare icons). */}
+      <nav className="no-scrollbar fixed inset-x-3 bottom-3 z-40 flex gap-1 overflow-x-auto rounded-[26px] bg-fg p-1.5 lg:hidden" aria-label="Admin">
+        {ITEMS.map(({ href, label, short, icon: Icon }) => (
+          <Link
+            key={href}
+            href={href}
+            aria-label={label}
+            aria-current={active(pathname, href) ? 'page' : undefined}
+            className={`flex w-[68px] shrink-0 flex-col items-center gap-1 rounded-2xl px-1 py-2 text-[10px] font-semibold ${active(pathname, href) ? 'bg-brand-2 text-white' : 'text-white/60'}`}
+          >
             <Icon className="size-5" />
+            {short}
           </Link>
         ))}
       </nav>

@@ -461,7 +461,7 @@ function PlanForm({ plan, onDone }: { plan: AdminPlan | null; onDone: () => void
       </div>
 
       <Field label="Features (one per line, shown on the pricing card)">
-        <textarea className="input min-h-28" value={f.features} onChange={(e) => setF({ ...f, features: e.target.value })} placeholder={'10 team members\n5,000 leads\nAI Copilot'} />
+        <textarea className="input min-h-28" value={f.features} onChange={(e) => setF({ ...f, features: e.target.value })} placeholder={'10 team members\n5,000 leads\nSmalo AI'} />
       </Field>
 
       <div className="grid gap-3 sm:grid-cols-4">

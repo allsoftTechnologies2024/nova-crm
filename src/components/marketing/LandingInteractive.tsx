@@ -74,15 +74,15 @@ const STEPS: { bg: string; tag: string; title: string; text: string; demo: React
   },
   {
     bg: 'bg-moss',
-    tag: '@copilot',
+    tag: '@smalo',
     title: 'Ask. It acts.',
-    text: '“Move Acme to proposal.” “Who’s slipping this week?” Copilot reads your pipeline and does the work, within your role’s permissions.',
+    text: '“Move Acme to proposal.” “Who’s slipping this week?” Smalo AI reads your pipeline and does the work, within your role’s permissions.',
     demo: (
       <div className="space-y-3 text-sm">
         <p className="ml-auto w-fit max-w-[85%] rounded-2xl rounded-br-sm bg-white px-4 py-2.5 text-ink">Move Acme to proposal and remind me Friday</p>
         <div className="w-fit max-w-[90%] rounded-2xl rounded-bl-sm bg-ink px-4 py-3 text-white">
           <p className="flex items-center gap-1.5 text-xs text-zest">
-            <Bot className="size-3.5" /> Copilot
+            <Bot className="size-3.5" /> Smalo AI
           </p>
           <p className="mt-1">Done. Acme Corp is now in <b>Proposal</b>, follow-up set for Fri 10:00 AM ✓</p>
         </div>
@@ -199,7 +199,7 @@ const FEATURES = [
   { icon: ImagePlus, bg: 'bg-tang', title: 'AI capture', text: 'Notes, chats or a card photo in, clean customer records out.' },
   { icon: Wand2, bg: 'bg-sun', title: 'Tell it what happened', text: 'Stage, value and follow-up update themselves.' },
   { icon: Gauge, bg: 'bg-cobalt', title: 'Deal scoring', text: 'A 0–100 score and the best next step.' },
-  { icon: Bot, bg: 'bg-ink', title: 'Copilot that acts', text: 'Ask a question or give an order, it does the work.' },
+  { icon: Bot, bg: 'bg-ink', title: 'Smalo AI that acts', text: 'Ask a question or give an order, it does the work.' },
   { icon: Mail, bg: 'bg-berry', title: 'Follow-ups written', text: 'Email and WhatsApp drafts from the full history.' },
   { icon: ShieldCheck, bg: 'bg-moss', title: 'Role-based access', text: 'Agents only see their own customers, even through AI.' },
 ];

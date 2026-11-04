@@ -56,7 +56,7 @@ export default function TopBar({ orgName, user, ai }: Props) {
       }`}
     >
       <div className="flex items-center gap-2.5 sm:gap-3">
-        <Link href="/app" aria-label="Smart CRM home" className="grid size-10 shrink-0 place-items-center rounded-2xl bg-brand text-base font-bold text-white shadow-float lg:hidden">
+        <Link href="/app" aria-label="Smalo home" className="grid size-10 shrink-0 place-items-center rounded-2xl bg-brand text-base font-bold text-white shadow-float lg:hidden">
           S
         </Link>
         <div className="mr-auto min-w-0">

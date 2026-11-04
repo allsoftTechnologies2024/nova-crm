@@ -17,7 +17,33 @@ export default async function WorkspacesPage({ searchParams }: PageProps<'/admin
         <input name="q" defaultValue={query} placeholder="Search workspace, owner or member email" className="w-full bg-transparent text-sm outline-none placeholder:text-muted" />
       </form>
 
-      <div className="card scroll-thin overflow-x-auto">
+      {/* Phones: one tappable card per workspace. */}
+      <ul className="space-y-2.5 md:hidden">
+        {orgs.map((o) => (
+          <li key={o.id}>
+            <Link href={`/admin/workspaces/${o.id}`} className="card flex items-center gap-3 p-4">
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2">
+                  <p className="truncate font-bold">{o.name}</p>
+                  {o.suspended && <span className="chip shrink-0 bg-rose-50 text-rose-600 ring-rose-200">Suspended</span>}
+                </div>
+                <p className="truncate text-xs text-muted">{o.owner}</p>
+                <div className="mt-2 flex flex-wrap items-center gap-1.5 text-xs text-muted">
+                  <span className="chip bg-brand/10 text-brand ring-brand/20">{o.planName}</span>
+                  {o.planSource === 'trial' && <span className="chip bg-brand-2/10 text-brand-2 ring-brand-2/20">Trial</span>}
+                  <span>
+                    {o.users} member{o.users === 1 ? '' : 's'} · {o.leads.toLocaleString('en-IN')} leads · {o.aiUsed} AI
+                  </span>
+                </div>
+              </div>
+              <ChevronRight className="size-4 shrink-0 text-muted" />
+            </Link>
+          </li>
+        ))}
+        {orgs.length === 0 && <li className="card px-5 py-10 text-center text-sm text-muted">No workspaces match “{query}”.</li>}
+      </ul>
+
+      <div className="card scroll-thin hidden overflow-x-auto md:block">
         <table className="w-full min-w-[860px] text-sm">
           <thead className="text-left text-xs text-muted">
             <tr className="border-b border-line">

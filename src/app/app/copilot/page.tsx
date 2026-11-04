@@ -3,7 +3,7 @@ import { resolveForOrg } from '@/lib/ai';
 import { requirePage } from '@/lib/auth/session';
 import { getConversation, listConversations } from '@/lib/services/conversations';
 
-export const metadata = { title: 'AI Copilot' };
+export const metadata = { title: 'Smalo AI' };
 
 export default async function CopilotPage({ searchParams }: PageProps<'/app/copilot'>) {
   const auth = await requirePage('ai:use');
