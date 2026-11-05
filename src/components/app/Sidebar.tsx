@@ -4,7 +4,7 @@ import { ChevronLeft, ChevronRight, CreditCard, Ellipsis, History, Home, LayoutG
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useState } from 'react';
-import { Modal } from '@/components/ui';
+import { BrandMark, Modal } from '@/components/ui';
 import { SIDEBAR_COOKIE, api } from '@/lib/client';
 
 const ITEMS = [
@@ -76,7 +76,7 @@ export default function Sidebar({ nav, orgName, defaultOpen, user, quickAdd }: P
         </button>
 
         <Link href="/app" className={`flex items-center gap-3 ${open ? 'px-1' : ''}`} aria-label="Smalo home">
-          <span className="grid size-11 shrink-0 place-items-center rounded-2xl bg-white/15 text-lg font-bold text-white ring-1 ring-white/25">S</span>
+          <BrandMark inverted className="size-11 shrink-0" />
           {open && (
             <span className="min-w-0 animate-fade-up text-white">
               <span className="block text-base font-bold leading-tight">Smalo</span>

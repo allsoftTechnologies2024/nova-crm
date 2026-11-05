@@ -102,7 +102,7 @@ export default async function Home() {
         <div className="relative overflow-hidden rounded-[28px] bg-white sm:rounded-[36px]">
           <header className="relative z-20 flex items-center justify-between gap-4 px-5 py-5 sm:px-10 sm:py-7">
             <Link href="/" aria-label="Smalo home">
-              <Logo className="text-lg text-ink" />
+              <Logo className="text-ink" />
             </Link>
             <nav className="hidden items-center rounded-full bg-chalk p-1 text-sm font-medium md:flex" aria-label="Main">
               {[

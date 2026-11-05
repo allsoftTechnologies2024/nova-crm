@@ -1,10 +1,10 @@
 'use client';
 
-import { ArrowRight, Building2, Clock3, Fingerprint, Lock, Mail, ScrollText, ShieldCheck, Timer, UserCog } from 'lucide-react';
+import { ArrowRight, Building2, Clock3, Fingerprint, Lock, Mail, ScrollText, Timer, UserCog } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
-import { ErrorText } from '@/components/ui';
+import { BrandMark, ErrorText } from '@/components/ui';
 import PasswordField from '@/components/ui/PasswordField';
 import { api, errorText } from '@/lib/client';
 
@@ -45,9 +45,7 @@ export default function AdminLoginForm() {
         style={{ backgroundImage: 'radial-gradient(rgb(255 255 255 / 0.07) 1px, transparent 1px)', backgroundSize: '22px 22px' }}
       >
         <div className="flex items-center gap-3">
-          <span className="grid size-11 place-items-center rounded-2xl bg-brand-2">
-            <ShieldCheck className="size-5" />
-          </span>
+          <BrandMark inverted className="size-11 shrink-0" />
           <div className="leading-tight">
             <p className="font-bold">Smalo</p>
             <p className="text-xs text-white/50">Platform operations</p>
@@ -106,9 +104,7 @@ export default function AdminLoginForm() {
       {/* Sign-in */}
       <main className="flex flex-col px-6 py-8 sm:px-12">
         <div className="flex items-center gap-2.5 lg:hidden">
-          <span className="grid size-9 place-items-center rounded-xl bg-[#151515] text-white">
-            <ShieldCheck className="size-4" />
-          </span>
+          <BrandMark className="size-9 shrink-0" />
           <span className="text-sm font-bold">Smalo · Platform</span>
         </div>
 

@@ -10,9 +10,10 @@ export default function OpengraphImage() {
     (
       <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', padding: 72, background: '#151515', color: '#fff' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 24 }}>
-          <div style={{ display: 'flex', borderRadius: 24, background: '#c4321f' }}>
+          <div style={{ display: 'flex', borderRadius: 24, background: '#fff' }}>
             <svg width="96" height="96" viewBox="0 0 64 64">
-              <path d="M42 21.5C40 17.5 36.5 15.5 31.5 15.5C25.5 15.5 21 18.8 21 24C21 35 43 29 43 40C43 45.2 38.5 48.5 32 48.5C26.5 48.5 22.5 46 20.5 42" fill="none" stroke="#fff" strokeWidth="7.5" strokeLinecap="round" />
+              <path d="M30 14.5A8.75 8.75 0 0 0 30 32A8.75 8.75 0 0 1 30 49.5H20.5" fill="none" stroke="#151515" strokeWidth="9" strokeLinecap="round" />
+              <circle cx="43" cy="14.5" r="5.5" fill="#f26b2f" />
             </svg>
           </div>
           <div style={{ fontSize: 56, fontWeight: 700 }}>Smalo</div>

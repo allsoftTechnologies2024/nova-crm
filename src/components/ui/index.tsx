@@ -5,14 +5,38 @@ import { useEffect, type ReactNode } from 'react';
 import { formatWhen, timeAgo } from '@/lib/client';
 import { PRIORITY_META, STATUS_META, type LeadPriority, type LeadStatus } from '@/lib/lead-meta';
 
+// Same artwork as public/brand/*.svg, inlined so the wordmark can follow the surrounding text colour.
+function MarkShapes({ inverted = false }: { inverted?: boolean }) {
+  return (
+    <>
+      <rect width="64" height="64" rx="16" fill={inverted ? '#ffffff' : '#151515'} />
+      <path d="M30 14.5A8.75 8.75 0 0 0 30 32A8.75 8.75 0 0 1 30 49.5H20.5" fill="none" stroke={inverted ? '#151515' : '#ffffff'} strokeWidth="9" strokeLinecap="round" />
+      <circle cx="43" cy="14.5" r="5.5" fill="#f26b2f" />
+    </>
+  );
+}
+
+export function BrandMark({ inverted = false, className = 'size-8' }: { inverted?: boolean; className?: string }) {
+  return (
+    <svg viewBox="0 0 64 64" className={className} aria-hidden="true">
+      <MarkShapes inverted={inverted} />
+    </svg>
+  );
+}
+
 export function Logo({ className = '' }: { className?: string }) {
   return (
-    <span className={`inline-flex items-center gap-2 font-semibold tracking-tight ${className}`}>
-      <span className="grid size-8 place-items-center rounded-xl bg-brand text-[14px] font-bold text-white shadow-float">
-        S
-      </span>
-      Smalo
-    </span>
+    <svg viewBox="0 0 232 64" className={`h-8 w-auto ${className}`} role="img" aria-label="Smalo">
+      <MarkShapes />
+      <g transform="translate(80 20.5) scale(1.08)" fill="none" stroke="currentColor" strokeWidth="7" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M14 3.5H9A5.25 5.25 0 0 0 9 14A5.25 5.25 0 0 1 9 24.5H4" />
+        <path d="M27 24.5V3.5M27 10.5A7 7 0 0 1 41 10.5V24.5M41 10.5A7 7 0 0 1 55 10.5V24.5" />
+        <circle cx="78.5" cy="14" r="10.5" />
+        <path d="M89 3.5V24.5" />
+        <path d="M102 -10V24.5" />
+        <circle cx="125.5" cy="14" r="10.5" />
+      </g>
+    </svg>
   );
 }
 

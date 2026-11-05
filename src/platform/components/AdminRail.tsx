@@ -4,6 +4,7 @@ import { Building2, ChevronLeft, Cpu, CreditCard, Layers, KeyRound, LayoutDashbo
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useState } from 'react';
+import { BrandMark } from '@/components/ui';
 import { api } from '@/lib/client';
 import { ADMIN_SIDEBAR_COOKIE } from '@/platform/prefs';
 
@@ -67,8 +68,8 @@ export default function AdminRail({ defaultOpen }: { defaultOpen: boolean }) {
         </button>
 
         <div className={`flex items-center gap-3 ${open ? 'px-1' : ''}`}>
-          <span className="grid size-11 shrink-0 place-items-center rounded-2xl bg-brand-2 text-white" title="Platform admin">
-            <ShieldCheck className="size-5" />
+          <span className="shrink-0" title="Platform admin">
+            <BrandMark inverted className="block size-11" />
           </span>
           {open && (
             <span className="min-w-0 animate-fade-up text-white">

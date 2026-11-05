@@ -17,7 +17,7 @@ export default function AuthShell({ title, subtitle, children, footer }: { title
     <div className="mk grid min-h-screen lg:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)]">
       <div className="flex flex-col px-6 py-8 sm:px-12 lg:px-16">
         <Link href="/" className="w-fit">
-          <Logo className="text-lg text-ink" />
+          <Logo className="text-ink" />
         </Link>
         <div className="mx-auto flex w-full max-w-sm flex-1 animate-fade-up flex-col justify-center py-12">
           <h1 className="display text-5xl">{title}</h1>

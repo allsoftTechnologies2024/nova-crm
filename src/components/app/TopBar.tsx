@@ -4,6 +4,7 @@ import { Search, Sparkles, X } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import { BrandMark } from '@/components/ui';
 import { sectionOf } from './Sidebar';
 
 interface Props {
@@ -56,8 +57,8 @@ export default function TopBar({ orgName, user, ai }: Props) {
       }`}
     >
       <div className="flex items-center gap-2.5 sm:gap-3">
-        <Link href="/app" aria-label="Smalo home" className="grid size-10 shrink-0 place-items-center rounded-2xl bg-brand text-base font-bold text-white shadow-float lg:hidden">
-          S
+        <Link href="/app" aria-label="Smalo home" className="shrink-0 rounded-[25%] shadow-float lg:hidden">
+          <BrandMark className="block size-10" />
         </Link>
         <div className="mr-auto min-w-0">
           <p className="truncate text-[11px] font-medium text-muted sm:text-xs">{orgName}</p>
